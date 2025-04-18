@@ -8,8 +8,8 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
+  StatusBar,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -61,7 +61,8 @@ export default function DictionaryScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar backgroundColor="#008080" barStyle="light-content" />
       <View style={styles.searchContainer}>
         <Ionicons
           name="search"
@@ -97,7 +98,7 @@ export default function DictionaryScreen() {
           </View>
         }
       />
-    </SafeAreaView>
+    </View>
   );
 }
 

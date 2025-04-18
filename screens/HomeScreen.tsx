@@ -5,8 +5,8 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
+  StatusBar,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Ionicons,
   FontAwesome5,
@@ -37,11 +37,15 @@ export default function HomeScreen() {
   const { points } = useAppContext();
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar backgroundColor="#008080" barStyle="light-content" />
       <View style={styles.header}>
         <View style={styles.pointsContainer}>
-          <Ionicons name="star" size={24} color="#FFD700" />
-          <Text style={styles.pointsText}>{points}</Text>
+          <Ionicons name="cart-outline" size={24} color="white" />
+          <View style={styles.starContainer}>
+            <Ionicons name="star" size={20} color="#FFD700" />
+            <Text style={styles.pointsText}>{points}</Text>
+          </View>
         </View>
         <Text style={styles.headerTitle}>Lists</Text>
         <TouchableOpacity onPress={() => navigation.navigate("Settings")}>
@@ -110,7 +114,7 @@ export default function HomeScreen() {
           />
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -125,6 +129,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     backgroundColor: "#008080",
     padding: 15,
+    paddingTop: StatusBar.currentHeight || 15,
   },
   headerTitle: {
     color: "white",
@@ -135,9 +140,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  pointsText: {
-    color: "white",
+  starContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     marginLeft: 5,
+  },
+  pointsText: {
+    color: "#FFD700",
+    marginLeft: 2,
     fontWeight: "bold",
   },
   wordContainer: {

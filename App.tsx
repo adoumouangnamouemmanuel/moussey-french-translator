@@ -23,6 +23,9 @@ import AudioPlayerScreen from "./screens/AudioPlayerScreen";
 import SettingsScreen from "./screens/SettingsScreen";
 import ListsScreen from "./screens/ListsScreen";
 import WordDetailScreen from "./screens/WordDetailScreen";
+import StatisticsScreen from "./screens/StatisticsScreen";
+import PracticeScreen from "./screens/PracticeScreen";
+import LearningScreen from "./screens/LearningScreen";
 
 // Context
 import { AppProvider } from "./context/AppContext";
@@ -46,13 +49,13 @@ function HomeTabs() {
         options={{
           tabBarLabel: "Home",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+            <Ionicons name="list" size={size} color={color} />
           ),
         }}
       />
       <Tab.Screen
         name="LearnTab"
-        component={HomeScreen}
+        component={LearningScreen}
         options={{
           tabBarLabel: "Learn",
           tabBarIcon: ({ color, size }) => (
@@ -62,7 +65,7 @@ function HomeTabs() {
       />
       <Tab.Screen
         name="PracticeTab"
-        component={HomeScreen}
+        component={PracticeScreen}
         options={{
           tabBarLabel: "Practice",
           tabBarIcon: ({ color, size }) => (
@@ -72,7 +75,7 @@ function HomeTabs() {
       />
       <Tab.Screen
         name="StatsTab"
-        component={HomeScreen}
+        component={StatisticsScreen}
         options={{
           tabBarLabel: "Stats",
           tabBarIcon: ({ color, size }) => (
@@ -94,6 +97,9 @@ function AppNavigator() {
         headerTintColor: "#fff",
         headerTitleStyle: {
           fontWeight: "bold",
+        },
+        contentStyle: {
+          backgroundColor: "#f5f5f5",
         },
       }}
     >
@@ -123,7 +129,7 @@ export default function App() {
       <AppProvider>
         <NavigationContainer>
           <AppNavigator />
-          <StatusBar style="light" />
+          <StatusBar style="light" backgroundColor="#008080" />
         </NavigationContainer>
       </AppProvider>
     </SafeAreaProvider>

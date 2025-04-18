@@ -7,11 +7,9 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
+  StatusBar,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 
 type Language = "moussey" | "french";
 
@@ -57,78 +55,88 @@ export default function TranslatorScreen() {
     }, 1000);
   };
 
-  const clearText = () => {
-    setInputText("");
-    setTranslatedText("");
-  };
-
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.languageSelector}>
-        <View style={styles.languageBox}>
+    <View style={styles.container}>
+      <StatusBar backgroundColor="#008080" barStyle="light-content" />
+
+      {/* Header with language selector */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="white" />
+        </TouchableOpacity>
+
+        <View style={styles.languageSelector}>
           <Text style={styles.languageText}>
             {fromLanguage === "moussey" ? "Moussey" : "French"}
           </Text>
-        </View>
-
-        <TouchableOpacity onPress={switchLanguages} style={styles.switchButton}>
-          <MaterialCommunityIcons
-            name="swap-horizontal"
-            size={24}
-            color="#008080"
-          />
-        </TouchableOpacity>
-
-        <View style={styles.languageBox}>
+          <Text style={styles.arrowText}>→</Text>
           <Text style={styles.languageText}>
             {toLanguage === "moussey" ? "Moussey" : "French"}
           </Text>
         </View>
-      </View>
 
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.textInput}
-            placeholder={`Enter ${
-              fromLanguage === "moussey" ? "Moussey" : "French"
-            } text...`}
-            value={inputText}
-            onChangeText={setInputText}
-            multiline
-            textAlignVertical="top"
-          />
-          {inputText.length > 0 && (
-            <TouchableOpacity style={styles.clearButton} onPress={clearText}>
-              <Ionicons name="close-circle" size={20} color="#666" />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        <View style={styles.translationContainer}>
-          {isLoading ? (
-            <ActivityIndicator size="large" color="#008080" />
-          ) : (
-            <Text style={styles.translatedText}>
-              {translatedText || `Translation will appear here`}
-            </Text>
-          )}
-        </View>
-      </ScrollView>
-
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[
-            styles.translateButton,
-            !inputText.trim() && styles.disabledButton,
-          ]}
-          onPress={translateText}
-          disabled={!inputText.trim() || isLoading}
-        >
-          <Text style={styles.translateButtonText}>Translate</Text>
+        <TouchableOpacity onPress={switchLanguages} style={styles.switchButton}>
+          <Ionicons name="refresh" size={24} color="white" />
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+
+      {/* Input area */}
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.textInput}
+          placeholder={`Enter ${
+            fromLanguage === "moussey" ? "Moussey" : "French"
+          } text...`}
+          value={inputText}
+          onChangeText={setInputText}
+          multiline
+          placeholderTextColor="#999"
+        />
+
+        <View style={styles.inputButtons}>
+          <TouchableOpacity style={styles.inputButton}>
+            <Ionicons name="image" size={24} color="#008080" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.inputButton}>
+            <Ionicons name="mic" size={24} color="#008080" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.inputButton}>
+            <Ionicons name="volume-high" size={24} color="#008080" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.inputButton}
+            onPress={switchLanguages}
+          >
+            <Ionicons name="swap-horizontal" size={24} color="#008080" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Translation result area */}
+      <View style={styles.translationContainer}>
+        <Text style={styles.translatedText}>
+          {translatedText || "Translation will appear here"}
+        </Text>
+      </View>
+
+      {/* Bottom buttons */}
+      <View style={styles.bottomButtons}>
+        <TouchableOpacity style={styles.bottomButton}>
+          <Ionicons name="volume-high" size={24} color="white" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.bottomButton}>
+          <Ionicons name="copy" size={24} color="white" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.bottomButton}>
+          <Ionicons name="share-social" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
@@ -137,38 +145,41 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#008080",
+    padding: 15,
+    paddingTop: StatusBar.currentHeight || 15,
+  },
+  backButton: {
+    padding: 5,
+  },
   languageSelector: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    padding: 15,
-    backgroundColor: "white",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-  },
-  languageBox: {
+    justifyContent: "center",
     flex: 1,
-    alignItems: "center",
-    padding: 10,
   },
   languageText: {
-    fontSize: 16,
+    color: "white",
+    fontSize: 18,
     fontWeight: "bold",
-    color: "#008080",
+  },
+  arrowText: {
+    color: "white",
+    fontSize: 18,
+    marginHorizontal: 10,
   },
   switchButton: {
-    padding: 10,
-  },
-  scrollView: {
-    flex: 1,
+    padding: 5,
   },
   inputContainer: {
     backgroundColor: "white",
-    margin: 15,
+    margin: 10,
     borderRadius: 8,
-    padding: 10,
-    minHeight: 150,
-    position: "relative",
+    padding: 15,
     elevation: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
@@ -177,48 +188,47 @@ const styles = StyleSheet.create({
   },
   textInput: {
     fontSize: 16,
-    minHeight: 130,
+    minHeight: 120,
+    textAlignVertical: "top",
   },
-  clearButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
+  inputButtons: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#f0f0f0",
+    paddingTop: 10,
+  },
+  inputButton: {
+    padding: 10,
   },
   translationContainer: {
-    backgroundColor: "white",
-    margin: 15,
-    marginTop: 0,
+    backgroundColor: "#008080",
+    margin: 10,
+    marginTop: 5,
     borderRadius: 8,
     padding: 15,
     minHeight: 150,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.5,
+    flex: 1,
   },
   translatedText: {
     fontSize: 16,
-    color: "#333",
+    color: "white",
   },
-  footer: {
-    padding: 15,
-    backgroundColor: "white",
-    borderTopWidth: 1,
-    borderTopColor: "#e0e0e0",
-  },
-  translateButton: {
+  bottomButtons: {
+    flexDirection: "row",
+    justifyContent: "space-around",
     backgroundColor: "#008080",
     padding: 15,
-    borderRadius: 8,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  bottomButton: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: "center",
     alignItems: "center",
-  },
-  disabledButton: {
-    backgroundColor: "#cccccc",
-  },
-  translateButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
   },
 });
