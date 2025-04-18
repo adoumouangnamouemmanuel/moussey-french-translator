@@ -108,17 +108,45 @@ function AppNavigator() {
         component={HomeTabs}
         options={{ headerShown: false }}
       />
-      <Stack.Screen name="Dictionary" component={DictionaryScreen} />
-      <Stack.Screen name="Translator" component={TranslatorScreen} />
+      <Stack.Screen
+        name="Dictionary"
+        component={DictionaryScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Translator"
+        component={TranslatorScreen}
+        options={{ headerShown: false }}
+      />
       <Stack.Screen name="Favorites" component={FavoritesScreen} />
-      <Stack.Screen name="History" component={HistoryScreen} />
+      <Stack.Screen
+        name="History"
+        component={HistoryScreen}
+        options={{ headerShown: false }}
+      />
       <Stack.Screen name="Phrases" component={PhrasesScreen} />
-      <Stack.Screen name="IrregularVerbs" component={IrregularVerbsScreen} />
-      <Stack.Screen name="PhrasalVerbs" component={PhrasalVerbsScreen} />
-      <Stack.Screen name="AudioPlayer" component={AudioPlayerScreen} />
+      <Stack.Screen
+        name="IrregularVerbs"
+        component={IrregularVerbsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="PhrasalVerbs"
+        component={PhrasalVerbsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AudioPlayer"
+        component={AudioPlayerScreen}
+        options={{ headerShown: false }}
+      />
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="Lists" component={ListsScreen} />
-      <Stack.Screen name="WordDetail" component={WordDetailScreen} />
+      <Stack.Screen
+        name="WordDetail"
+        component={WordDetailScreen}
+        options={{ headerShown: false }}
+      />
     </Stack.Navigator>
   );
 }

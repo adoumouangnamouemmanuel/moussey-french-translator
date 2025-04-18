@@ -8,9 +8,12 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
+  StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 // Mock irregular verbs data
 const mockIrregularVerbs = [
@@ -59,6 +62,9 @@ const mockIrregularVerbs = [
 export default function IrregularVerbsScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [isSearchMode, setIsSearchMode] = useState(false);
+
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
   const filteredVerbs = mockIrregularVerbs.filter((verb) =>
     verb.infinitive.toLowerCase().includes(searchQuery.toLowerCase())
@@ -70,23 +76,43 @@ export default function IrregularVerbsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.searchContainer}>
-        <Ionicons
-          name="search"
-          size={20}
-          color="#666"
-          style={styles.searchIcon}
-        />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search for a verb..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery("")}>
-            <Ionicons name="close-circle" size={20} color="#666" />
-          </TouchableOpacity>
+      <StatusBar backgroundColor="#008080" barStyle="light-content" />
+
+      <View style={styles.header}>
+        {isSearchMode ? (
+          <View style={styles.searchHeader}>
+            <TouchableOpacity
+              onPress={() => {
+                setIsSearchMode(false);
+                setSearchQuery("");
+              }}
+            >
+              <Ionicons name="arrow-back" size={24} color="white" />
+            </TouchableOpacity>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search for a verb..."
+              placeholderTextColor="rgba(255,255,255,0.7)"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery("")}>
+                <Ionicons name="close-circle" size={20} color="white" />
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : (
+          <>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back" size={24} color="white" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Moussey → French</Text>
+            <TouchableOpacity onPress={() => setIsSearchMode(true)}>
+              <Ionicons name="search" size={24} color="white" />
+            </TouchableOpacity>
+          </>
         )}
       </View>
 
@@ -142,26 +168,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
-  searchContainer: {
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#008080",
+    padding: 15,
+    paddingTop: StatusBar.currentHeight || 15,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "white",
+  },
+  searchHeader: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "white",
-    borderRadius: 8,
-    margin: 10,
-    paddingHorizontal: 10,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.5,
-  },
-  searchIcon: {
-    marginRight: 10,
   },
   searchInput: {
     flex: 1,
-    height: 50,
+    color: "white",
     fontSize: 16,
+    marginLeft: 10,
+    marginRight: 5,
+    height: 40,
   },
   verbItem: {
     backgroundColor: "white",

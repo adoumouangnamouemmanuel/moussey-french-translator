@@ -1,3 +1,5 @@
+"use client";
+
 import {
   StyleSheet,
   View,
@@ -5,11 +7,13 @@ import {
   FlatList,
   TouchableOpacity,
   StatusBar,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAppContext } from "../context/AppContext";
+import { useState } from "react";
 
 // Mock history data - in a real app, you would get this from your database
 const mockHistoryItems = [
@@ -44,22 +48,70 @@ export default function HistoryScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const { clearHistory } = useAppContext();
 
+  const [isSearchMode, setIsSearchMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredHistory =
+    searchQuery.trim() === ""
+      ? mockHistoryItems
+      : mockHistoryItems.filter(
+          (item) =>
+            item.french.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.moussey.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#008080" barStyle="light-content" />
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>French → Moussey</Text>
-        <TouchableOpacity>
-          <Ionicons name="trash-outline" size={24} color="white" />
-        </TouchableOpacity>
+        {isSearchMode ? (
+          <View style={styles.searchHeader}>
+            <TouchableOpacity
+              onPress={() => {
+                setIsSearchMode(false);
+                setSearchQuery("");
+              }}
+            >
+              <Ionicons name="arrow-back" size={24} color="white" />
+            </TouchableOpacity>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search history..."
+              placeholderTextColor="rgba(255,255,255,0.7)"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery("")}>
+                <Ionicons name="close-circle" size={20} color="white" />
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : (
+          <>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back" size={24} color="white" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>French → Moussey</Text>
+            <View style={styles.headerActions}>
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={() => setIsSearchMode(true)}
+              >
+                <Ionicons name="search" size={24} color="white" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.headerButton}>
+                <Ionicons name="trash-outline" size={24} color="white" />
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
       </View>
 
       <FlatList
-        data={mockHistoryItems}
+        data={filteredHistory}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.historyItem}>
@@ -74,10 +126,18 @@ export default function HistoryScreen() {
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="time-outline" size={60} color="#cccccc" />
-            <Text style={styles.emptyText}>No history yet</Text>
+            <Ionicons
+              name={searchQuery ? "search" : "time-outline"}
+              size={60}
+              color="#cccccc"
+            />
+            <Text style={styles.emptyText}>
+              {searchQuery ? "No matching results found" : "No history yet"}
+            </Text>
             <Text style={styles.emptySubtext}>
-              Words you view will appear here
+              {searchQuery
+                ? "Try a different search term"
+                : "Words you view will appear here"}
             </Text>
           </View>
         }
@@ -115,6 +175,25 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "white",
+  },
+  headerActions: {
+    flexDirection: "row",
+  },
+  headerButton: {
+    marginLeft: 15,
+  },
+  searchHeader: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  searchInput: {
+    flex: 1,
+    color: "white",
+    fontSize: 16,
+    marginLeft: 10,
+    marginRight: 5,
+    height: 40,
   },
   historyItem: {
     backgroundColor: "white",

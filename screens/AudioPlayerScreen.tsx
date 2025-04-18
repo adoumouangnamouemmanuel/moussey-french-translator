@@ -109,7 +109,7 @@ export default function AudioPlayerScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Audio Lessons</Text>
+        <Text style={styles.headerTitle}>Moussey → French</Text>
       </View>
 
       <FlatList
