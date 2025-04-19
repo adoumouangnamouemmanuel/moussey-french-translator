@@ -21,192 +21,372 @@ import * as Clipboard from "expo-clipboard";
 import { ToastAndroid } from "react-native";
 import { useTheme } from "../context/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { bibleBooks } from "../data/bibleBooks";
 
-// Bible books in French
-const bibleBooks = [
-  // Ancien Testament
-  { id: "1", name: "Genèse", chapters: 50, testament: "ancien" },
-  { id: "2", name: "Exode", chapters: 40, testament: "ancien" },
-  { id: "3", name: "Lévitique", chapters: 27, testament: "ancien" },
-  { id: "4", name: "Nombres", chapters: 36, testament: "ancien" },
-  { id: "5", name: "Deutéronome", chapters: 34, testament: "ancien" },
-  { id: "6", name: "Josué", chapters: 24, testament: "ancien" },
-  { id: "7", name: "Juges", chapters: 21, testament: "ancien" },
-  { id: "8", name: "Ruth", chapters: 4, testament: "ancien" },
-  { id: "9", name: "1 Samuel", chapters: 31, testament: "ancien" },
-  { id: "10", name: "2 Samuel", chapters: 24, testament: "ancien" },
-  { id: "11", name: "1 Rois", chapters: 22, testament: "ancien" },
-  { id: "12", name: "2 Rois", chapters: 25, testament: "ancien" },
-  { id: "13", name: "1 Chroniques", chapters: 29, testament: "ancien" },
-  { id: "14", name: "2 Chroniques", chapters: 36, testament: "ancien" },
-  { id: "15", name: "Esdras", chapters: 10, testament: "ancien" },
-  { id: "16", name: "Néhémie", chapters: 13, testament: "ancien" },
-  { id: "17", name: "Esther", chapters: 10, testament: "ancien" },
-  { id: "18", name: "Job", chapters: 42, testament: "ancien" },
-  { id: "19", name: "Psaumes", chapters: 150, testament: "ancien" },
-  { id: "20", name: "Proverbes", chapters: 31, testament: "ancien" },
-  // Nouveau Testament
-  { id: "40", name: "Matthieu", chapters: 28, testament: "nouveau" },
-  { id: "41", name: "Marc", chapters: 16, testament: "nouveau" },
-  { id: "42", name: "Luc", chapters: 24, testament: "nouveau" },
-  { id: "43", name: "Jean", chapters: 21, testament: "nouveau" },
-  { id: "44", name: "Actes", chapters: 28, testament: "nouveau" },
-  { id: "45", name: "Romains", chapters: 16, testament: "nouveau" },
-  { id: "46", name: "1 Corinthiens", chapters: 16, testament: "nouveau" },
-  { id: "47", name: "2 Corinthiens", chapters: 13, testament: "nouveau" },
-  { id: "48", name: "Galates", chapters: 6, testament: "nouveau" },
-  { id: "49", name: "Éphésiens", chapters: 6, testament: "nouveau" },
-  { id: "50", name: "Philippiens", chapters: 4, testament: "nouveau" },
-  { id: "51", name: "Colossiens", chapters: 4, testament: "nouveau" },
-  { id: "52", name: "1 Thessaloniciens", chapters: 5, testament: "nouveau" },
-  { id: "53", name: "2 Thessaloniciens", chapters: 3, testament: "nouveau" },
-];
+// Replace the mockVerses and allMockVerses arrays with a more comprehensive data structure
 
-// Mock verses for Genesis 1
-const mockVerses = [
-  {
-    id: "1",
-    verse: 1,
-    text: "Au commencement, Dieu créa les cieux et la terre.",
-    english: "In the beginning God created the heavens and the earth.",
-  },
-  {
-    id: "2",
-    verse: 2,
-    text: "La terre était informe et vide; il y avait des ténèbres à la surface de l'abîme, et l'Esprit de Dieu se mouvait au-dessus des eaux.",
-    english:
-      "Now the earth was formless and empty, darkness was over the surface of the deep, and the Spirit of God was hovering over the waters.",
-  },
-  {
-    id: "3",
-    verse: 3,
-    text: "Dieu dit: Que la lumière soit! Et la lumière fut.",
-    english: 'And God said, "Let there be light," and there was light.',
-  },
-  {
-    id: "4",
-    verse: 4,
-    text: "Dieu vit que la lumière était bonne; et Dieu sépara la lumière d'avec les ténèbres.",
-    english:
-      "God saw that the light was good, and he separated the light from the darkness.",
-  },
-  {
-    id: "5",
-    verse: 5,
-    text: "Dieu appela la lumière jour, et il appela les ténèbres nuit. Ainsi, il y eut un soir, et il y eut un matin: ce fut le premier jour.",
-    english:
-      'God called the light "day," and the darkness he called "night." And there was evening, and there was morning—the first day.',
-  },
-  {
-    id: "6",
-    verse: 6,
-    text: "Dieu dit: Qu'il y ait une étendue entre les eaux, et qu'elle sépare les eaux d'avec les eaux.",
-    english:
-      'And God said, "Let there be a vault between the waters to separate water from water."',
-  },
-  {
-    id: "7",
-    verse: 7,
-    text: "Et Dieu fit l'étendue, et il sépara les eaux qui sont au-dessous de l'étendue d'avec les eaux qui sont au-dessus de l'étendue. Et cela fut ainsi.",
-    english:
-      "So God made the vault and separated the water under the vault from the water above it. And it was so.",
-  },
-  {
-    id: "8",
-    verse: 8,
-    text: "Dieu appela l'étendue ciel. Ainsi, il y eut un soir, et il y eut un matin: ce fut le second jour.",
-    english:
-      'God called the vault "sky." And there was evening, and there was morning—the second day.',
-  },
-  {
-    id: "9",
-    verse: 9,
-    text: "Dieu dit: Que les eaux qui sont au-dessous du ciel se rassemblent en un seul lieu, et que le sec paraisse. Et cela fut ainsi.",
-    english:
-      'And God said, "Let the water under the sky be gathered to one place, and let dry ground appear." And it was so.',
-  },
-  {
-    id: "10",
-    verse: 10,
-    text: "Dieu appela le sec terre, et il appela l'amas des eaux mers. Dieu vit que cela était bon.",
-    english:
-      'God called the dry ground "land," and the gathered waters he called "seas." And God saw that it was good.',
-  },
-];
+// Replace the mockVerses array with this:
+// Mock verses for different books
+const mockVersesData: Record<string, { id: string; verse: number; text: string; french: string }[]> = {
+  // Genesis 1
+  "1-1": [
+    {
+      "id": "1-1-1",
+      "verse": 1,
+      "text": "Lona gijaŋŋa ay jewni li huulona, li ndaŋgara.",
+      "french": "Au commencement, Dieu créa les cieux et la terre."
+    },
+    {
+      "id": "1-1-2",
+      "verse": 2,
+      "text": "Ndaŋgara ay ka liiɗi, va ay ka kaɗɗi lay. Lina ay kuluɓi, ndufunda kay mbo ŋgolna, Musuk Lonara mbusuk kolo kay mbona.",
+      "french": "La terre était informe et vide: il y avait des ténèbres à la surface de l'abîme, et l'esprit de Dieu se mouvait au-dessus des eaux."
+    },
+    {
+      "id": "1-1-3",
+      "verse": 3,
+      "text": "Lona di ana, «Ko kiɗikka liya!» ndaɗ li gaw.",
+      "french": "Dieu dit: Que la lumière soit! Et la lumière fut."
+    },
+    {
+      "id": "1-1-4",
+      "verse": 4,
+      "text": "Lona wi ana kiɗikka jiviya ni, nam ɓorow duk kiɗikka ki u ndufunda.",
+      "french": "Dieu vit que la lumière était bonne; et Dieu sépara la lumière d'avec les ténèbres."
+    },
+    {
+      "id": "1-1-5",
+      "verse": 5,
+      "text": "Lona yi kiɗikka ana faalira, nam yi ndufunda ana njeŋgera. Njeŋgera liya, maɗiira fo may, ni buu dew.",
+      "french": "Dieu appela la lumière jour, et il appela les ténèbres nuit. Ainsi, il y eut un soir, et il y eut un matin: ce fut le premier jour."
+    },
+    {
+      "id": "1-1-6",
+      "verse": 6,
+      "text": "Lona di ana, «Ko va ma ŋgol li a ɓorow duk hoŋ mbona ki mba'!»",
+      "french": "Dieu dit: Qu'il y ait une étendue entre les eaux, et qu'elle sépare les eaux d'avec les eaux."
+    },
+    {
+      "id": "1-1-7",
+      "verse": 7,
+      "text": "Lona hin li va namma ɓorow duk ɦoŋ mbo ma kaŋgana ki u ma kolona. Nam hin li na gaw may.",
+      "french": "Et Dieu fit l'étendue, et il sépara les eaux qui sont au-dessous de l'étendue d'avec les eaux qui sont au-dessus de l'étendue. Et cela fut ainsi."
+    },
+    {
+      "id": "1-1-8",
+      "verse": 8,
+      "text": "Lona yi va namma ana huulona. Njeŋgera liya, maɗiira fo may, ni buu ma mbana.",
+      "french": "Dieu appela l'étendue ciel. Ainsi, il y eut un soir, et il y eut un matin: ce fut le second jour."
+    },
+    {
+      "id": "1-1-9",
+      "verse": 9,
+      "text": "Lona di olo ana, «Mbo ma kaŋgana tok ki hu lina dew, kay yam ndaŋgara tak ki kiɗiki!» ndaɗ hin li na gaw may.",
+      "french": "Dieu dit: Que les eaux qui sont au-dessous du ciel se rassemblent en un seul lieu, et que le sec paraisse. Et cela fut ainsi."
+    },
+    {
+      "id": "1-1-10",
+      "verse": 10,
+      "text": "Lona yi li ki sooyna ana ndaŋgara, li ma mbona huna nam yam ana lum ŋgolna. Lona wi ana dla ndaɗta ni jiviya.",
+      "french": "Dieu appela le sec terre, et il appela l'amas des eaux mers. Dieu vit que cela était bon."
+    },
+    {
+      "id": "1-1-11",
+      "verse": 11,
+      "text": "Lona hin di ɗaŋŋi ana, «Tlena day kay ndaŋgara, tlesuu dayna zul njafasi ha ki kay ndaŋgara, guguni suu tira vuɗ njafasi hu zeɗ zeɗ may!» Asi hin li na may.",
+      "french": "Puis Dieu dit: Que la terre produise de la verdure, de l'herbe portant de la semence, des arbres fruitiers donnant du fruit selon leur espèce et ayant en eux leur semence sur la terre. Et cela fut ainsi."
+    },
+    {
+      "id": "1-1-12",
+      "verse": 12,
+      "text": "Ni kay ndaɗta tlena zul kay ndaŋgara, tlena day ki u njafasi zeɗ zeɗ, guguni suu vuɗusi tina day u ii njafasi hu zeɗ zeɗ may. Lona wi ana dla ndaɗta ni jiviya.",
+      "french": "La terre produisit de la verdure, de l'herbe portant de la semence selon son espèce, et des arbres donnant du fruit et ayant en eux leur semence selon leur espèce. Dieu vit que cela était bon."
+    },
+    {
+      "id": "1-1-13",
+      "verse": 13,
+      "text": "Njeŋgera liya, maɗiira fo may, ni buu ma hindina.",
+      "french": "Ainsi, il y eut un soir, et il y eut un matin: ce fut le troisième jour."
+    },
+    {
+      "id": "1-1-14",
+      "verse": 14,
+      "text": "Lona di ana, «Ko tlesuu ɓo lina li kolo huulona, kay a ɓorow duk njeŋgera ki u faalira, kay a tak ki kay luuna u buuna u basara,",
+      "french": "Dieu dit: Qu'il y ait des luminaires dans l'étendue du ciel, pour séparer le jour d'avec la nuit; que ce soient des signes pour marquer les époques, les jours et les années;"
+    },
+    {
+      "id": "1-1-15",
+      "verse": 15,
+      "text": "a asi ay kolo huulona li kiɗikka kay ndaŋgara!» Asi hin li na may.",
+      "french": "et qu'ils servent de luminaires dans l'étendue du ciel, pour éclairer la terre. Et cela fut ainsi."
+    },
+    {
+      "id": "1-1-16",
+      "verse": 16,
+      "text": "Lona li tlesuu ŋgolo suu li kiɗikka mba', ta ŋgolla li a mul kiɗikka faalira, ma goona li a mul kiɗikka njeŋgera may. Nam li ki ciciwra may.",
+      "french": "Dieu fit les deux grands luminaires, le plus grand luminaire pour présider au jour, et le plus petit luminaire pour présider à la nuit; il fit aussi les étoiles."
+    },
+    {
+      "id": "1-1-17",
+      "verse": 17,
+      "text": "Lona njarasi ay kolo a li kiɗikka kay ndaŋgara.",
+      "french": "Dieu les plaça dans l'étendue du ciel, pour éclairer la terre,"
+    },
+    {
+      "id": "1-1-18",
+      "verse": 18,
+      "text": "Kay a ti mulla kay faalira u njeŋgera, kay a ɓorow ii kiɗikka ki u ndufunda. Lona wi ana dla ndaɗta ni jiviya.",
+      "french": "pour présider au jour et à la nuit, et pour séparer la lumière d'avec les ténèbres. Dieu vit que cela était bon."
+    },
+    {
+      "id": "1-1-19",
+      "verse": 19,
+      "text": "Njeŋgera liya, maɗiira fo may, ni buu ma fiɗina.",
+      "french": "Ainsi, il y eut un soir, et il y eut un matin: ce fut le quatrième jour."
+    },
+    {
+      "id": "1-1-20",
+      "verse": 20,
+      "text": "Lona di ana, «Ko tlesuu iirina li duk mbona na ŋgamat ŋgamat, layagina pii kolo kay ndaŋgara huulona may!»",
+      "french": "Dieu dit: Que les eaux produisent en abondance des animaux vivants, et que des oiseaux volent sur la terre vers l'étendue du ciel."
+    },
+    {
+      "id": "1-1-21",
+      "verse": 21,
+      "text": "Lona li vabak ma duk mbona u tlesuu iirina lus duk mbona ŋgamat ŋgamat, njafasi zeɗ zeɗ, nam li layagi suu piira u njafasi zeɗ zeɗ may. Lona wi ana dla ndaɗta ni jiviya.",
+      "french": "Dieu créa les grands poissons et tous les animaux vivants qui se meuvent, et que les eaux produisirent en abondance selon leur espèce; il créa aussi tout oiseau ailé selon son espèce. Dieu vit que cela était bon."
+    },
+    {
+      "id": "1-1-22",
+      "verse": 22,
+      "text": "Lona paɗ vunum kasiya, ɦasi saɓakŋa ana asi vuɗa, zul duk mbona, oy lumma ŋgolna ki lay, layagina zul kay ndaŋgara na may.",
+      "french": "Dieu les bénit, en disant: Soyez féconds, multipliez, et remplissez les eaux des mers; et que les oiseaux multiplient sur la terre."
+    },
+    {
+      "id": "1-1-23",
+      "verse": 23,
+      "text": "Njeŋgera liya, maɗiira fo may, ni buu ma vadlna.",
+      "french": "Ainsi, il y eut un soir, et il y eut un matin: ce fut le cinquième jour."
+    },
+    {
+      "id": "1-1-24",
+      "verse": 24,
+      "text": "Lona di ana, «Ko ndaŋgara zul tlesuu iirina u njafasi zeɗ zeɗ, tlesuu tuɗ u sesina, tlesuu ɦaram kaŋgana, u mburi suu bagina lay!» Asi hin li na may.",
+      "french": "Dieu dit: Que la terre produise des animaux vivants selon leur espèce, du bétail, des reptiles et des animaux terrestres, selon leur espèce. Et cela fut ainsi."
+    },
+    {
+      "id": "1-1-25",
+      "verse": 25,
+      "text": "Lona li mburi suu kay ndaŋgarana u njafasi zeɗ zeɗ, u tlesuu ɦaram kaŋgana, u njafasi zeɗ zeɗ u tlesuu tuɗ u sesina u njafasi zeɗ zeɗ may. Lona wi ana tle asina irim jiviya.",
+      "french": "Dieu fit les animaux de la terre selon leur espèce, le bétail selon son espèce, et tous les reptiles de la terre selon leur espèce. Dieu vit que cela était bon."
+    },
+    {
+      "id": "1-1-26",
+      "verse": 26,
+      "text": "Lona di olo ana, «Laygi sana tli tam ko aygi na. Kay nam a ti mulla kay kulufna duk lum ŋgolna, kay layagi suu pii kolona, kay tlesuu tuɗ u sesina halaŋ, u ndaŋgara lay, kay tlesuu ɦaram kaŋga kay ndaŋgara na halaŋ!»",
+      "french": "Puis Dieu dit: Faisons l'homme à notre image, selon notre ressemblance, et qu'il domine sur les poissons de la mer, sur les oiseaux du ciel, sur le bétail, sur toute la terre, et sur tous les reptiles qui rampent sur la terre."
+    },
+    {
+      "id": "1-1-27",
+      "verse": 27,
+      "text": "Lona li sana ko tamba na. Nam lammi tli tam u Lona. Nam li sa njufna may li cara may.",
+      "french": "Dieu créa l'homme à son image, il le créa à l'image de Dieu, il créa l'homme et la femme."
+    },
+    {
+      "id": "1-1-28",
+      "verse": 28,
+      "text": "Lona paɗ vunum ki kasi dasi ana, «Vuɗugiya, zulugiya, oyogi yam ndaŋgara. Tagi mulla kaɗu, tagi mulla kay kulufna duk lum ŋgolna may, kay layagi suu pii kolona may, kay tlesuu ɦaram kay ndaŋgara halaŋ.»",
+      "french": "Dieu les bénit, et Dieu leur dit: Soyez féconds, multipliez, remplissez la terre, et l'assujettissez; et dominez sur les poissons de la mer, sur les oiseaux du ciel, et sur tout animal qui se meut sur la terre."
+    },
+    {
+      "id": "1-1-29",
+      "verse": 29,
+      "text": "Lona di ana, «Gola an ɦagi tlesuu ŋgolom suu kay ndaŋgara u irisi hu halaŋ, u guguni suu tira u vuɗusi halaŋ lay, asi hinni a tiigina.",
+      "french": "Et Dieu dit: Voici, je vous donne toute herbe portant de la semence et qui est à la surface de toute la terre, et tout arbre ayant en lui du fruit d'arbre et portant de la semence: ce sera votre nourriture."
+    },
+    {
+      "id": "1-1-30",
+      "verse": 30,
+      "text": "Ni kay ndaɗta an ɦal usu ma ŋgolomma maŋ mburina kay ndaŋgara u layagina suu kolo huulona, u tlesuu iiri suu ɦaram kay ndaŋgara halaŋ a tiisina, ni maŋ tlesuu iirina halaŋ.» Dla ndaɗta hin li na gaw may.",
+      "french": "Et à tout animal de la terre, à tout oiseau du ciel, et à tout ce qui se meut sur la terre, ayant en soi un souffle de vie, je donne toute herbe verte pour nourriture. Et cela fut ainsi."
+    },
+    {
+      "id": "1-1-31",
+      "verse": 31,
+      "text": "Lona wi ana tlesuu nam lasina halaŋ jivi cocoo. Njeŋgera liya, maɗiira fo may, ni buu ma karkiyana.",
+      "french": "Dieu vit tout ce qu'il avait fait et voici, cela était très bon. Ainsi, il y eut un soir, et il y eut un matin: ce fut le sixième jour."
+    }
+  ],
+  // Genesis 2
+  "1-2": [
+    {
+      id: "1-2-1",
+      verse: 1,
+      text: "Ainsi furent achevés les cieux et la terre, et toute leur armée.",
+      french:
+        "Thus the heavens and the earth were completed in all their vast array.",
+    },
+    {
+      id: "1-2-2",
+      verse: 2,
+      text: "Dieu acheva au septième jour son œuvre, qu'il avait faite: et il se reposa au septième jour de toute son œuvre, qu'il avait faite.",
+      french:
+        "By the seventh day God had finished the work he had been doing; so on the seventh day he rested from all his work.",
+    },
+    {
+      id: "1-2-3",
+      verse: 3,
+      text: "Dieu bénit le septième jour, et il le sanctifia, parce qu'en ce jour il se reposa de toute son œuvre qu'il avait créée en la faisant.",
+      french:
+        "Then God blessed the seventh day and made it holy, because on it he rested from all the work of creating that he had done.",
+    },
+  ],
+  // Matthew 1
+  "40-1": [
+    {
+      id: "40-1-1",
+      verse: 1,
+      text: "Généalogie de Jésus-Christ, fils de David, fils d'Abraham.",
+      french:
+        "This is the genealogy of Jesus the Messiah the son of David, the son of Abraham.",
+    },
+    {
+      id: "40-1-2",
+      verse: 2,
+      text: "Abraham engendra Isaac; Isaac engendra Jacob; Jacob engendra Juda et ses frères;",
+      french:
+        "Abraham was the father of Isaac, Isaac the father of Jacob, Jacob the father of Judah and his brothers,",
+    },
+    {
+      id: "40-1-3",
+      verse: 3,
+      text: "Juda engendra de Thamar Pharès et Zara; Pharès engendra Esrom; Esrom engendra Aram;",
+      french:
+        "Judah the father of Perez and Zerah, whose mother was Tamar, Perez the father of Hezron, Hezron the father of Ram,",
+    },
+  ],
+  // Matthew 5
+  "40-5": [
+    {
+      id: "40-5-1",
+      verse: 1,
+      text: "Voyant la foule, Jésus monta sur la montagne; et, après qu'il se fut assis, ses disciples s'approchèrent de lui.",
+      french:
+        "Now when Jesus saw the crowds, he went up on a mountainside and sat down. His disciples came to him,",
+    },
+    {
+      id: "40-5-2",
+      verse: 2,
+      text: "Puis, ayant ouvert la bouche, il les enseigna, et dit:",
+      french: "and he began to teach them.",
+    },
+    {
+      id: "40-5-3",
+      verse: 3,
+      text: "Heureux les pauvres en esprit, car le royaume des cieux est à eux!",
+      french:
+        "Blessed are the poor in spirit, for theirs is the kingdom of heaven.",
+    },
+    {
+      id: "40-5-4",
+      verse: 4,
+      text: "Heureux les affligés, car ils seront consolés!",
+      french: "Blessed are those who mourn, for they will be comforted.",
+    },
+  ],
+  // John 3
+  "43-3": [
+    {
+      id: "43-3-1",
+      verse: 1,
+      text: "Mais il y eut un homme d'entre les pharisiens, nommé Nicodème, un chef des Juifs,",
+      french:
+        "Now there was a Pharisee, a man named Nicodemus who was a member of the Jewish ruling council.",
+    },
+    {
+      id: "43-3-2",
+      verse: 2,
+      text: "qui vint, lui, auprès de Jésus, de nuit, et lui dit: Rabbi, nous savons que tu es un docteur venu de Dieu; car personne ne peut faire ces miracles que tu fais, si Dieu n'est avec lui.",
+      french:
+        'He came to Jesus at night and said, "Rabbi, we know that you are a teacher who has come from God. For no one could perform the signs you are doing if God were not with him."',
+    },
+    {
+      id: "43-3-16",
+      verse: 16,
+      text: "Car Dieu a tant aimé le monde qu'il a donné son Fils unique, afin que quiconque croit en lui ne périsse point, mais qu'il ait la vie éternelle.",
+      french:
+        "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.",
+    },
+  ],
+  // Psalms 23
+  "19-23": [
+    {
+      id: "19-23-1",
+      verse: 1,
+      text: "L'Éternel est mon berger: je ne manquerai de rien.",
+      french: "The LORD is my shepherd, I lack nothing.",
+    },
+    {
+      id: "19-23-2",
+      verse: 2,
+      text: "Il me fait reposer dans de verts pâturages, Il me dirige près des eaux paisibles.",
+      french:
+        "He makes me lie down in green pastures, he leads me beside quiet waters,",
+    },
+    {
+      id: "19-23-3",
+      verse: 3,
+      text: "Il restaure mon âme, Il me conduit dans les sentiers de la justice, A cause de son nom.",
+      french:
+        "he refreshes my soul. He guides me along the right paths for his name's sake.",
+    },
+  ],
+  // Romans 8
+  "45-8": [
+    {
+      id: "45-8-1",
+      verse: 1,
+      text: "Il n'y a donc maintenant aucune condamnation pour ceux qui sont en Jésus-Christ.",
+      french:
+        "Therefore, there is now no condemnation for those who are in Christ Jesus,",
+    },
+    {
+      id: "45-8-28",
+      verse: 28,
+      text: "Nous savons, du reste, que toutes choses concourent au bien de ceux qui aiment Dieu, de ceux qui sont appelés selon son dessein.",
+      french:
+        "And we know that in all things God works for the good of those who love him, who have been called according to his purpose.",
+    },
+    {
+      id: "45-8-31",
+      verse: 31,
+      text: "Que dirons-nous donc à l'égard de ces choses? Si Dieu est pour nous, qui sera contre nous?",
+      french:
+        "What, then, shall we say in response to these things? If God is for us, who can be against us?",
+    },
+  ],
+};
 
-// More mock verses for search functionality
-const allMockVerses = [
-  ...mockVerses,
-  {
-    id: "11",
-    book: "Genèse",
-    chapter: 1,
-    verse: 11,
-    text: "Puis Dieu dit: Que la terre produise de la verdure, de l'herbe portant de la semence, des arbres fruitiers donnant du fruit selon leur espèce et ayant en eux leur semence sur la terre. Et cela fut ainsi.",
-    english:
-      'Then God said, "Let the land produce vegetation: seed-bearing plants and trees on the land that bear fruit with seed in it, according to their various kinds." And it was so.',
-  },
-  {
-    id: "12",
-    book: "Jean",
-    chapter: 3,
-    verse: 16,
-    text: "Car Dieu a tant aimé le monde qu'il a donné son Fils unique, afin que quiconque croit en lui ne périsse point, mais qu'il ait la vie éternelle.",
-    english:
-      "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.",
-  },
-  {
-    id: "13",
-    book: "Psaumes",
-    chapter: 23,
-    verse: 1,
-    text: "L'Éternel est mon berger: je ne manquerai de rien.",
-    english: "The LORD is my shepherd, I lack nothing.",
-  },
-  {
-    id: "14",
-    book: "Matthieu",
-    chapter: 5,
-    verse: 3,
-    text: "Heureux les pauvres en esprit, car le royaume des cieux est à eux!",
-    english:
-      "Blessed are the poor in spirit, for theirs is the kingdom of heaven.",
-  },
-  {
-    id: "15",
-    book: "Romains",
-    chapter: 8,
-    verse: 28,
-    text: "Nous savons, du reste, que toutes choses concourent au bien de ceux qui aiment Dieu, de ceux qui sont appelés selon son dessein.",
-    english:
-      "And we know that in all things God works for the good of those who love him, who have been called according to his purpose.",
-  },
-];
+// Create a comprehensive collection of all verses for search functionality
+const allMockVerses = Object.entries(mockVersesData).flatMap(
+  ([key, verses]) => {
+    const [bookId, chapterId] = key.split("-").map(Number);
+    const book = bibleBooks.find((b) => Number(b.id) === bookId)?.name || "";
+
+    return verses.map((verse) => ({
+      ...verse,
+      book,
+      chapter: chapterId,
+    }));
+  }
+);
 
 // Replace the static recent readings and bookmarks with empty arrays
-// Define the type for recent readings
-type RecentReading = {
-  id: string;
-  book: string;
-  chapter: number;
-  verse: number;
-};
-
-// Initialize recent readings with the correct type
-const initialRecentReadings: RecentReading[] = [];
-// Define the type for bookmarks
-type Bookmark = {
-  id: string;
-  book: string;
-  chapter: number;
-  verse: number;
-  note?: string;
-};
-
-const initialBookmarks: Bookmark[] = [];
+const initialRecentReadings: { id: string; book: string; chapter: number; verse: number }[] = [];
+const initialBookmarks: { id: string; book: string; chapter: number; verse: number; note?: string }[] = [];
 
 // Translation options
-type TranslationOption = "french" | "english" | "both";
+type TranslationOption = "moussey" | "french" | "both";
 
 export default function BibleScreen() {
   const { colors } = useTheme();
@@ -311,7 +491,7 @@ export default function BibleScreen() {
     const results = allMockVerses.filter(
       (verse) =>
         verse.text.toLowerCase().includes(normalizedQuery) ||
-        verse.english.toLowerCase().includes(normalizedQuery)
+        verse.french.toLowerCase().includes(normalizedQuery)
     );
 
     setSearchResults(results);
@@ -367,7 +547,34 @@ export default function BibleScreen() {
     }
   };
 
-  // Handle verse press
+  // Add a function to remove recent reading after the saveRecentReading function
+  const removeRecentReading = async (id: string) => {
+    try {
+      const updatedReadings = recentReadings.filter(
+        (reading) => reading.id !== id
+      );
+      setRecentReadings(updatedReadings);
+      await AsyncStorage.setItem(
+        "recentReadings",
+        JSON.stringify(updatedReadings)
+      );
+
+      if (Platform.OS === "android") {
+        ToastAndroid.show("Lecture récente supprimée", ToastAndroid.SHORT);
+      } else {
+        Alert.alert("Succès", "Lecture récente supprimée");
+      }
+    } catch (error) {
+      console.error("Error removing recent reading:", error);
+      if (Platform.OS === "android") {
+        ToastAndroid.show("Erreur lors de la suppression", ToastAndroid.SHORT);
+      } else {
+        Alert.alert("Erreur", "Impossible de supprimer la lecture récente");
+      }
+    }
+  };
+
+  // Update the handleVersePress function to work with the new data structure
   const handleVersePress = (verse: any) => {
     setSelectedVerse(verse);
     setShowVerseOptions(verse.id);
@@ -395,17 +602,18 @@ export default function BibleScreen() {
     ]).start();
   };
 
+
   // Copy verse to clipboard
   const copyVerse = (verse: any) => {
     const book = bibleBooks.find((b) => b.id === selectedBook);
     if (!book) return;
 
     const verseText =
-      translationOption === "english"
-        ? verse.english
-        : translationOption === "french"
+      translationOption === "french"
+        ? verse.french
+        : translationOption === "moussey"
         ? verse.text
-        : `${verse.text}\n${verse.english}`;
+        : `${verse.text}\n${verse.french}`;
 
     const reference = `${book.name} ${selectedChapter}:${verse.verse}`;
     const fullText = `${reference}\n${verseText}`;
@@ -428,11 +636,11 @@ export default function BibleScreen() {
     if (!book) return;
 
     const verseText =
-      translationOption === "english"
-        ? verse.english
-        : translationOption === "french"
+      translationOption === "french"
+        ? verse.french
+        : translationOption === "moussey"
         ? verse.text
-        : `${verse.text}\n${verse.english}`;
+        : `${verse.text}\n${verse.french}`;
 
     const reference = `${book.name} ${selectedChapter}:${verse.verse}`;
     const fullText = `${reference}\n${verseText}`;
@@ -585,91 +793,21 @@ export default function BibleScreen() {
     }
   };
 
-  // Render chapter grid
-  const renderChapterGrid = () => {
-    const book = bibleBooks.find((b) => b.id === selectedBook);
-    if (!book) return null;
-
-    return (
-      <Animated.View
-        style={[
-          styles.chapterContainer,
-          { backgroundColor: colors.card },
-          { opacity: fadeAnim },
-        ]}
-      >
-        <View style={styles.chapterHeader}>
-          <TouchableOpacity
-            onPress={() => {
-              Animated.timing(fadeAnim, {
-                toValue: 0,
-                duration: 200,
-                useNativeDriver: true,
-              }).start(() => {
-                setSelectedBook(null);
-                fadeAnim.setValue(1);
-              });
-            }}
-            style={styles.backButton}
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={[styles.chapterTitle, { color: colors.text }]}>
-            {book.name}
-          </Text>
-          <TouchableOpacity onPress={() => setShowJumpToModal(true)}>
-            <Ionicons name="search" size={24} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.chaptersGrid}>
-          {Array.from({ length: book.chapters }, (_, i) => (
-            <TouchableOpacity
-              key={i}
-              style={[
-                styles.chapterItem,
-                {
-                  backgroundColor: colors.background,
-                  borderColor: colors.border,
-                },
-                selectedChapter === i + 1 && {
-                  backgroundColor: colors.primary,
-                },
-              ]}
-              onPress={() => {
-                Animated.timing(fadeAnim, {
-                  toValue: 0,
-                  duration: 200,
-                  useNativeDriver: true,
-                }).start(() => {
-                  setSelectedChapter(i + 1);
-                  fadeAnim.setValue(1);
-                });
-              }}
-            >
-              <Text
-                style={[
-                  styles.chapterNumber,
-                  { color: selectedChapter === i + 1 ? "white" : colors.text },
-                ]}
-              >
-                {i + 1}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </Animated.View>
-    );
-  };
-
-  // Render verses
+  // Update the renderVerses function to use the correct verses based on selected book and chapter
   const renderVerses = () => {
-    if (!selectedBook || !selectedChapter) return null;
+    if (!selectedBook || !selectedChapter) return;
 
     const book = bibleBooks.find((b) => b.id === selectedBook);
-    if (!book) return null;
+    if (!book) return;
 
     const fontSizes = getFontSize();
+
+    // Get the correct verses for the selected book and chapter
+    const verseKey = `${selectedBook}-${selectedChapter}`;
+    const verses = mockVersesData[verseKey as keyof typeof mockVersesData] || [];
+
+    // If no verses are available for this book/chapter, show a placeholder
+    const noVersesAvailable = verses.length === 0;
 
     return (
       <Animated.View
@@ -831,24 +969,24 @@ export default function BibleScreen() {
               <TouchableOpacity
                 style={[
                   styles.translationOption,
-                  translationOption === "french" && {
+                  translationOption === "moussey" && {
                     backgroundColor: colors.primary,
                     borderTopLeftRadius: 20,
                     borderBottomLeftRadius: 20,
                   },
                 ]}
-                onPress={() => setTranslationOption("french")}
+                onPress={() => setTranslationOption("moussey")}
               >
                 <Text
                   style={[
                     styles.translationOptionText,
                     {
                       color:
-                        translationOption === "french" ? "white" : colors.text,
+                        translationOption === "moussey" ? "white" : colors.text,
                     },
                   ]}
                 >
-                  Français
+                  Moussey
                 </Text>
               </TouchableOpacity>
 
@@ -877,24 +1015,24 @@ export default function BibleScreen() {
               <TouchableOpacity
                 style={[
                   styles.translationOption,
-                  translationOption === "english" && {
+                  translationOption === "french" && {
                     backgroundColor: colors.primary,
                     borderTopRightRadius: 20,
                     borderBottomRightRadius: 20,
                   },
                 ]}
-                onPress={() => setTranslationOption("english")}
+                onPress={() => setTranslationOption("french")}
               >
                 <Text
                   style={[
                     styles.translationOptionText,
                     {
                       color:
-                        translationOption === "english" ? "white" : colors.text,
+                        translationOption === "french" ? "white" : colors.text,
                     },
                   ]}
                 >
-                  English
+                  Français
                 </Text>
               </TouchableOpacity>
             </View>
@@ -904,126 +1042,136 @@ export default function BibleScreen() {
               ref={scrollViewRef}
               showsVerticalScrollIndicator={false}
             >
-              {mockVerses.map((verse) => (
-                <TouchableOpacity
-                  key={verse.id}
-                  style={[
-                    styles.verseItem,
-                    showVerseOptions === verse.id && {
-                      backgroundColor: `${colors.primary}10`,
-                    },
-                  ]}
-                  onPress={() => handleVersePress(verse)}
-                  onLongPress={() => handleVersePress(verse)}
-                >
-                  <View style={styles.verseHeader}>
-                    <Text
-                      style={[
-                        styles.verseNumber,
-                        { color: colors.primary, fontSize: fontSizes.verse },
-                      ]}
-                    >
-                      {verse.verse}
-                    </Text>
-                    {showVerseOptions === verse.id && (
-                      <View style={styles.verseActions}>
-                        <TouchableOpacity
-                          style={[
-                            styles.verseAction,
-                            { backgroundColor: colors.primary },
-                          ]}
-                          onPress={() => copyVerse(verse)}
-                        >
-                          <Ionicons
-                            name="copy-outline"
-                            size={16}
-                            color="white"
-                          />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[
-                            styles.verseAction,
-                            { backgroundColor: colors.primary },
-                          ]}
-                          onPress={() => shareVerse(verse)}
-                        >
-                          <Ionicons
-                            name="share-social-outline"
-                            size={16}
-                            color="white"
-                          />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[
-                            styles.verseAction,
-                            { backgroundColor: colors.primary },
-                          ]}
-                          onPress={() => {
-                            setSelectedVerse(verse);
-                            setShowBookmarkModal(true);
-                          }}
-                        >
-                          <Ionicons
-                            name="bookmark-outline"
-                            size={16}
-                            color="white"
-                          />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[
-                            styles.verseAction,
-                            { backgroundColor: colors.primary },
-                          ]}
-                          onPress={() => setShowVerseOptions(null)}
-                        >
-                          <Ionicons name="close" size={16} color="white" />
-                        </TouchableOpacity>
-                      </View>
+              {noVersesAvailable ? (
+                <View style={styles.emptyVersesContainer}>
+                  <Text
+                    style={[styles.emptyVersesText, { color: colors.inactive }]}
+                  >
+                    Aucun verset disponible pour {book.name} {selectedChapter}
+                  </Text>
+                </View>
+              ) : (
+                verses.map((verse) => (
+                  <TouchableOpacity
+                    key={verse.id}
+                    style={[
+                      styles.verseItem,
+                      showVerseOptions === verse.id && {
+                        backgroundColor: `${colors.primary}10`,
+                      },
+                    ]}
+                    onPress={() => handleVersePress(verse)}
+                    onLongPress={() => handleVersePress(verse)}
+                  >
+                    <View style={styles.verseHeader}>
+                      <Text
+                        style={[
+                          styles.verseNumber,
+                          { color: colors.primary, fontSize: fontSizes.verse },
+                        ]}
+                      >
+                        {verse.verse}
+                      </Text>
+                      {showVerseOptions === verse.id && (
+                        <View style={styles.verseActions}>
+                          <TouchableOpacity
+                            style={[
+                              styles.verseAction,
+                              { backgroundColor: colors.primary },
+                            ]}
+                            onPress={() => copyVerse(verse)}
+                          >
+                            <Ionicons
+                              name="copy-outline"
+                              size={16}
+                              color="white"
+                            />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[
+                              styles.verseAction,
+                              { backgroundColor: colors.primary },
+                            ]}
+                            onPress={() => shareVerse(verse)}
+                          >
+                            <Ionicons
+                              name="share-social-outline"
+                              size={16}
+                              color="white"
+                            />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[
+                              styles.verseAction,
+                              { backgroundColor: colors.primary },
+                            ]}
+                            onPress={() => {
+                              setSelectedVerse(verse);
+                              setShowBookmarkModal(true);
+                            }}
+                          >
+                            <Ionicons
+                              name="bookmark-outline"
+                              size={16}
+                              color="white"
+                            />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[
+                              styles.verseAction,
+                              { backgroundColor: colors.primary },
+                            ]}
+                            onPress={() => setShowVerseOptions(null)}
+                          >
+                            <Ionicons name="close" size={16} color="white" />
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </View>
+
+                    {(translationOption === "moussey" ||
+                      translationOption === "both") && (
+                      <Text
+                        style={[
+                          styles.verseText,
+                          { color: colors.text, fontSize: fontSizes.text },
+                        ]}
+                      >
+                        {verse.text}
+                      </Text>
                     )}
-                  </View>
 
-                  {(translationOption === "french" ||
-                    translationOption === "both") && (
-                    <Text
-                      style={[
-                        styles.verseText,
-                        { color: colors.text, fontSize: fontSizes.text },
-                      ]}
-                    >
-                      {verse.text}
-                    </Text>
-                  )}
+                    {translationOption === "both" && (
+                      <View
+                        style={[
+                          styles.divider,
+                          { backgroundColor: colors.border },
+                        ]}
+                      />
+                    )}
 
-                  {translationOption === "both" && (
-                    <View
-                      style={[
-                        styles.divider,
-                        { backgroundColor: colors.border },
-                      ]}
-                    />
-                  )}
-
-                  {(translationOption === "english" ||
-                    translationOption === "both") && (
-                    <Text
-                      style={[
-                        styles.verseTranslation,
-                        {
-                          color:
-                            translationOption === "both"
-                              ? colors.inactive
-                              : colors.text,
-                          fontSize:
-                            fontSizes.text -
-                            (translationOption === "both" ? 2 : 0),
-                        },
-                      ]}
-                    >
-                      {verse.english}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              ))}
+                    {(translationOption === "french" ||
+                      translationOption === "both") && (
+                      <Text
+                        style={[
+                          styles.verseTranslation,
+                          {
+                            color:
+                              translationOption === "both"
+                                ? colors.inactive
+                                : colors.text,
+                            fontSize:
+                              fontSizes.text -
+                              (translationOption === "both" ? 2 : 0),
+                          },
+                        ]}
+                      >
+                        {verse.french}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                ))
+              )}
               <View style={{ height: 20 }} />
             </ScrollView>
 
@@ -1089,7 +1237,84 @@ export default function BibleScreen() {
     );
   };
 
-  // Render recent readings
+  // Render chapter grid
+  const renderChapterGrid = () => {
+    const book = bibleBooks.find((b) => b.id === selectedBook);
+    if (!book) return null;
+
+    return (
+      <Animated.View
+        style={[
+          styles.chapterContainer,
+          { backgroundColor: colors.card },
+          { opacity: fadeAnim },
+        ]}
+      >
+        <View style={styles.chapterHeader}>
+          <TouchableOpacity
+            onPress={() => {
+              Animated.timing(fadeAnim, {
+                toValue: 0,
+                duration: 200,
+                useNativeDriver: true,
+              }).start(() => {
+                setSelectedBook(null);
+                fadeAnim.setValue(1);
+              });
+            }}
+            style={styles.backButton}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.chapterTitle, { color: colors.text }]}>
+            {book.name}
+          </Text>
+          <TouchableOpacity onPress={() => setShowJumpToModal(true)}>
+            <Ionicons name="search" size={24} color={colors.text} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.chaptersGrid}>
+          {Array.from({ length: book.chapters }, (_, i) => (
+            <TouchableOpacity
+              key={i}
+              style={[
+                styles.chapterItem,
+                {
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                },
+                selectedChapter === i + 1 && {
+                  backgroundColor: colors.primary,
+                },
+              ]}
+              onPress={() => {
+                Animated.timing(fadeAnim, {
+                  toValue: 0,
+                  duration: 200,
+                  useNativeDriver: true,
+                }).start(() => {
+                  setSelectedChapter(i + 1);
+                  fadeAnim.setValue(1);
+                });
+              }}
+            >
+              <Text
+                style={[
+                  styles.chapterNumber,
+                  { color: selectedChapter === i + 1 ? "white" : colors.text },
+                ]}
+              >
+                {i + 1}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </Animated.View>
+    );
+  };
+
+  // Update the renderRecentReadings function to navigate to the correct verse
   const renderRecentReadings = () => {
     return (
       <View style={[styles.recentContainer, { backgroundColor: colors.card }]}>
@@ -1104,19 +1329,53 @@ export default function BibleScreen() {
           </View>
         ) : (
           recentReadings.map((item) => (
-            <TouchableOpacity
+            <View
               key={item.id}
               style={[styles.recentItem, { borderBottomColor: colors.border }]}
-              onPress={() => {
-                const book = bibleBooks.find((b) => b.name === item.book);
-                if (book) {
-                  setSelectedBook(book.id);
-                  setSelectedChapter(item.chapter);
-                  setActiveTab("books");
-                }
-              }}
             >
-              <View style={styles.recentItemContent}>
+              <TouchableOpacity
+                style={styles.recentItemContent}
+                onPress={() => {
+                  const book = bibleBooks.find((b) => b.name === item.book);
+                  if (book) {
+                    setSelectedBook(book.id);
+                    setSelectedChapter(item.chapter);
+                    setActiveTab("books");
+
+                    // Set a timeout to allow the verses to render before scrolling
+                    setTimeout(() => {
+                      // Find the verse element and scroll to it
+                      if (scrollViewRef.current) {
+                        // We'll use a ref to track the verse we want to scroll to
+                        const verseToScrollTo = item.verse;
+
+                        // Get the verses for this book and chapter
+                        const verseKey = `${book.id}-${item.chapter}`;
+                        const verses = mockVersesData[verseKey] || [];
+
+                        // Set the selected verse to highlight it
+                        const verseObj = verses.find(
+                          (v) => v.verse === verseToScrollTo
+                        );
+                        if (verseObj) {
+                          setSelectedVerse(verseObj);
+                          setShowVerseOptions(verseObj.id);
+                        }
+
+                        // Calculate approximate position (this would be more precise with actual measurements)
+                        const approximateVerseHeight = 150; // average height of a verse container
+                        const scrollPosition =
+                          (verseToScrollTo - 1) * approximateVerseHeight;
+
+                        scrollViewRef.current.scrollTo({
+                          y: scrollPosition,
+                          animated: true,
+                        });
+                      }
+                    }, 500); // Give time for rendering
+                  }
+                }}
+              >
                 <Text style={[styles.recentItemTitle, { color: colors.text }]}>
                   {item.book} {item.chapter}:{item.verse}
                 </Text>
@@ -1125,13 +1384,83 @@ export default function BibleScreen() {
                   size={20}
                   color={colors.inactive}
                 />
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.deleteRecentButton}
+                onPress={() => removeRecentReading(item.id)}
+              >
+                <Ionicons
+                  name="trash-outline"
+                  size={20}
+                  color={colors.inactive}
+                />
+              </TouchableOpacity>
+            </View>
           ))
         )}
       </View>
     );
   };
+
+  // Modify the renderRecentReadings function to include delete functionality and store verse information
+  // const renderRecentReadings = () => {
+  //   return (
+  //     <View style={[styles.recentContainer, { backgroundColor: colors.card }]}>
+  //       <Text style={[styles.sectionTitle, { color: colors.text }]}>Lectures Récentes</Text>
+  //       {recentReadings.length === 0 ? (
+  //         <View style={styles.emptyContainer}>
+  //           <Text style={[styles.emptyText, { color: colors.inactive }]}>Aucune lecture récente</Text>
+  //         </View>
+  //       ) : (
+  //         recentReadings.map((item) => (
+  //           <View key={item.id} style={[styles.recentItem, { borderBottomColor: colors.border }]}>
+  //             <TouchableOpacity
+  //               style={styles.recentItemContent}
+  //               onPress={() => {
+  //                 const book = bibleBooks.find((b) => b.name === item.book)
+  //                 if (book) {
+  //                   setSelectedBook(book.id)
+  //                   setSelectedChapter(item.chapter)
+  //                   setActiveTab("books")
+
+  //                   // Set a timeout to allow the verses to render before scrolling
+  //                   setTimeout(() => {
+  //                     // Find the verse element and scroll to it
+  //                     if (scrollViewRef.current) {
+  //                       // We'll use a ref to track the verse we want to scroll to
+  //                       const verseToScrollTo = item.verse
+
+  //                       // Set the selected verse to highlight it
+  //                       const verseObj = mockVerses.find((v) => v.verse === verseToScrollTo)
+  //                       if (verseObj) {
+  //                         setSelectedVerse(verseObj)
+  //                         setShowVerseOptions(verseObj.id)
+  //                       }
+
+  //                       // Calculate approximate position (this would be more precise with actual measurements)
+  //                       const approximateVerseHeight = 150 // average height of a verse container
+  //                       const scrollPosition = (verseToScrollTo - 1) * approximateVerseHeight
+
+  //                       scrollViewRef.current.scrollTo({ y: scrollPosition, animated: true })
+  //                     }
+  //                   }, 500) // Give time for rendering
+  //                 }
+  //               }}
+  //             >
+  //               <Text style={[styles.recentItemTitle, { color: colors.text }]}>
+  //                 {item.book} {item.chapter}:{item.verse}
+  //               </Text>
+  //               <Ionicons name="chevron-forward" size={20} color={colors.inactive} />
+  //             </TouchableOpacity>
+  //             <TouchableOpacity style={styles.deleteRecentButton} onPress={() => removeRecentReading(item.id)}>
+  //               <Ionicons name="trash-outline" size={20} color={colors.inactive} />
+  //             </TouchableOpacity>
+  //           </View>
+  //         ))
+  //       )}
+  //     </View>
+  //   )
+  // }
 
   // Update the bookmarks rendering to include delete functionality
   const renderBookmarks = () => {
@@ -1807,6 +2136,12 @@ const styles = StyleSheet.create({
   recentItemTitle: {
     fontSize: 16,
   },
+  deleteRecentButton: {
+    padding: 10,
+    position: "absolute",
+    right: 30,
+    top: 10,
+  },
   bookmarksContainer: {
     flex: 1,
     padding: 15,
@@ -2105,5 +2440,14 @@ const styles = StyleSheet.create({
   },
   emptySearchResultsText: {
     fontSize: 16,
+  },
+  emptyVersesContainer: {
+    padding: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyVersesText: {
+    fontSize: 16,
+    textAlign: "center",
   },
 });

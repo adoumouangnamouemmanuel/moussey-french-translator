@@ -317,6 +317,24 @@ export default function HistoiresMousseyScreen() {
     }
   };
 
+  // Add a function to remove recent reading after the saveRecentReading function
+  const removeRecentReading = async (id: string) => {
+    try {
+      const updatedReadings = recentReadings.filter(
+        (reading) => reading.id !== id
+      );
+      setRecentReadings(updatedReadings);
+      await AsyncStorage.setItem(
+        "moussey_recent",
+        JSON.stringify(updatedReadings)
+      );
+      showToast("Lecture récente supprimée");
+    } catch (error) {
+      console.error("Error removing recent reading:", error);
+      showToast("Erreur lors de la suppression");
+    }
+  };
+
   // Add bookmark
   const addBookmark = async () => {
     try {
@@ -1201,7 +1219,7 @@ export default function HistoiresMousseyScreen() {
     );
   };
 
-  // Render recent readings tab
+  // Update the renderRecentTab function to include delete functionality
   const renderRecentTab = () => {
     return (
       <View style={[styles.tabContent, { backgroundColor: colors.background }]}>
@@ -1223,24 +1241,38 @@ export default function HistoiresMousseyScreen() {
             data={recentReadings}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <TouchableOpacity
+              <View
                 style={[styles.recentItem, { backgroundColor: colors.card }]}
-                onPress={() => handleSelectStory(item.storyId)}
               >
-                <View style={styles.recentContent}>
+                <TouchableOpacity
+                  style={styles.recentContent}
+                  onPress={() => handleSelectStory(item.storyId)}
+                >
                   <Text style={[styles.recentTitle, { color: colors.text }]}>
                     {item.title}
                   </Text>
                   <Text style={[styles.recentDate, { color: colors.inactive }]}>
                     {new Date(item.date).toLocaleDateString()}
                   </Text>
+                </TouchableOpacity>
+                <View style={styles.recentActions}>
+                  <TouchableOpacity
+                    style={styles.recentAction}
+                    onPress={() => removeRecentReading(item.id)}
+                  >
+                    <Ionicons
+                      name="trash-outline"
+                      size={20}
+                      color={colors.inactive}
+                    />
+                  </TouchableOpacity>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={20}
+                    color={colors.inactive}
+                  />
                 </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={20}
-                  color={colors.inactive}
-                />
-              </TouchableOpacity>
+              </View>
             )}
             contentContainerStyle={styles.recentsList}
           />
@@ -1968,10 +2000,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     marginRight: 10,
-      flexShrink: 1,
-      maxHeight:60,
-    alignItems: "center",
-    justifyContent: "center",
   },
   categoryChipText: {
     fontSize: 14,
@@ -2368,5 +2396,13 @@ const styles = StyleSheet.create({
   settingsButtonText: {
     color: "white",
     fontWeight: "500",
+  },
+  recentActions: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  recentAction: {
+    padding: 10,
+    marginRight: 5,
   },
 });
