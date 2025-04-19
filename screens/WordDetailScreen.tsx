@@ -20,6 +20,7 @@ import {
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAppContext } from "../context/AppContext";
 import { LinearGradient } from "expo-linear-gradient";
+import { useTheme } from "../context/ThemeContext"; // Import useTheme
 
 type WordDetailParams = {
   word: {
@@ -110,6 +111,7 @@ export default function WordDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const { word } = route.params;
   const { toggleFavorite, isFavorite } = useAppContext();
+  const { colors } = useTheme(); // Get theme colors
   const [isFavorited, setIsFavorited] = useState(isFavorite(word.id));
   const [activeTab, setActiveTab] = useState("examples");
   const [isPlaying, setIsPlaying] = useState(false);
@@ -161,9 +163,23 @@ export default function WordDetailScreen() {
   const relatedWords =
     mockRelatedWords[word.id as keyof typeof mockRelatedWords] || [];
 
+  // Use theme colors or fallback to original colors
+  const headerColors: [string, string, ...string[]] = Array.isArray(colors?.headerBackground) && colors.headerBackground.length >= 2
+    ? colors.headerBackground as [string, string, ...string[]]
+    : ["#00a0a0", "#008080"];
+  const primaryColor = colors?.primary || "#008080";
+  const backgroundColor = colors?.background || "#f5f5f5";
+  const cardColor = colors?.card || "white";
+  const textColor = colors?.text || "#333";
+  const inactiveColor = colors?.inactive || "#666";
+  const borderColor = colors?.border || "#e0e0e0";
+
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
-      <StatusBar backgroundColor="#008080" barStyle="light-content" />
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: backgroundColor }]}
+      edges={["bottom"]}
+    >
+      <StatusBar backgroundColor={primaryColor} barStyle="light-content" />
 
       {/* Animated Header */}
       <Animated.View
@@ -175,10 +191,7 @@ export default function WordDetailScreen() {
           },
         ]}
       >
-        <LinearGradient
-          colors={["#00a0a0", "#008080"]}
-          style={styles.headerGradient}
-        >
+        <LinearGradient colors={headerColors} style={styles.headerGradient}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
@@ -243,30 +256,50 @@ export default function WordDetailScreen() {
           style={[
             styles.contentContainer,
             {
+              backgroundColor: backgroundColor,
               transform: [{ translateY: contentTranslateY }],
             },
           ]}
         >
           {/* Translation Section */}
-          <View style={styles.section}>
+          <View style={[styles.section, { backgroundColor: cardColor }]}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Translation</Text>
+              <Text style={[styles.sectionTitle, { color: primaryColor }]}>
+                Translation
+              </Text>
             </View>
-            <View style={styles.translationContainer}>
-              <Text style={styles.translation}>{word.french}</Text>
+            <View
+              style={[
+                styles.translationContainer,
+                { backgroundColor: colors?.border || "#f9f9f9" },
+              ]}
+            >
+              <Text style={[styles.translation, { color: textColor }]}>
+                {word.french}
+              </Text>
             </View>
           </View>
 
           {/* Tabs */}
-          <View style={styles.tabsContainer}>
+          <View style={[styles.tabsContainer, { backgroundColor: cardColor }]}>
             <TouchableOpacity
-              style={[styles.tab, activeTab === "examples" && styles.activeTab]}
+              style={[
+                styles.tab,
+                activeTab === "examples" && [
+                  styles.activeTab,
+                  { backgroundColor: `${primaryColor}10` },
+                ],
+              ]}
               onPress={() => setActiveTab("examples")}
             >
               <Text
                 style={[
                   styles.tabText,
-                  activeTab === "examples" && styles.activeTabText,
+                  { color: inactiveColor },
+                  activeTab === "examples" && [
+                    styles.activeTabText,
+                    { color: primaryColor },
+                  ],
                 ]}
               >
                 Examples
@@ -274,13 +307,23 @@ export default function WordDetailScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.tab, activeTab === "related" && styles.activeTab]}
+              style={[
+                styles.tab,
+                activeTab === "related" && [
+                  styles.activeTab,
+                  { backgroundColor: `${primaryColor}10` },
+                ],
+              ]}
               onPress={() => setActiveTab("related")}
             >
               <Text
                 style={[
                   styles.tabText,
-                  activeTab === "related" && styles.activeTabText,
+                  { color: inactiveColor },
+                  activeTab === "related" && [
+                    styles.activeTabText,
+                    { color: primaryColor },
+                  ],
                 ]}
               >
                 Related Words
@@ -290,16 +333,36 @@ export default function WordDetailScreen() {
 
           {/* Tab Content */}
           {activeTab === "examples" ? (
-            <View style={styles.section}>
+            <View style={[styles.section, { backgroundColor: cardColor }]}>
               {examples.length > 0 ? (
                 examples.map((example, index) => (
-                  <View key={index} style={styles.example}>
-                    <Text style={styles.exampleText}>
-                      <Text style={styles.exampleLanguage}>Moussey: </Text>
+                  <View
+                    key={index}
+                    style={[
+                      styles.example,
+                      { backgroundColor: colors?.border || "#f9f9f9" },
+                    ]}
+                  >
+                    <Text style={[styles.exampleText, { color: textColor }]}>
+                      <Text
+                        style={[
+                          styles.exampleLanguage,
+                          { color: primaryColor },
+                        ]}
+                      >
+                        Moussey:{" "}
+                      </Text>
                       {example.moussey}
                     </Text>
-                    <Text style={styles.exampleText}>
-                      <Text style={styles.exampleLanguage}>French: </Text>
+                    <Text style={[styles.exampleText, { color: textColor }]}>
+                      <Text
+                        style={[
+                          styles.exampleLanguage,
+                          { color: primaryColor },
+                        ]}
+                      >
+                        French:{" "}
+                      </Text>
                       {example.french}
                     </Text>
                   </View>
@@ -309,44 +372,62 @@ export default function WordDetailScreen() {
                   <Ionicons
                     name="document-text-outline"
                     size={40}
-                    color="#ccc"
+                    color={inactiveColor}
                   />
-                  <Text style={styles.emptyStateText}>
+                  <Text
+                    style={[styles.emptyStateText, { color: inactiveColor }]}
+                  >
                     No examples available
                   </Text>
                 </View>
               )}
             </View>
           ) : (
-            <View style={styles.section}>
+            <View style={[styles.section, { backgroundColor: cardColor }]}>
               {relatedWords.length > 0 ? (
                 relatedWords.map((relatedWord) => (
                   <TouchableOpacity
                     key={relatedWord.id}
-                    style={styles.relatedWord}
+                    style={[
+                      styles.relatedWord,
+                      { backgroundColor: colors?.border || "#f9f9f9" },
+                    ]}
                     onPress={() =>
                       navigation.navigate("WordDetail", { word: relatedWord })
                     }
                   >
                     <View>
-                      <Text style={styles.relatedWordText}>
+                      <Text
+                        style={[styles.relatedWordText, { color: textColor }]}
+                      >
                         {relatedWord.moussey}
                       </Text>
-                      <Text style={styles.relatedWordTranslation}>
+                      <Text
+                        style={[
+                          styles.relatedWordTranslation,
+                          { color: inactiveColor },
+                        ]}
+                      >
                         {relatedWord.french}
                       </Text>
                     </View>
                     <Ionicons
                       name="chevron-forward"
                       size={20}
-                      color="#008080"
+                      color={primaryColor}
                     />
                   </TouchableOpacity>
                 ))
               ) : (
                 <View style={styles.emptyState}>
-                  <Ionicons name="link-outline" size={40} color="#ccc" />
-                  <Text style={styles.emptyStateText}>
+                  <Ionicons
+                    name="link-outline"
+                    size={40}
+                    color={inactiveColor}
+                  />
+                  <Text
+                    style={[styles.emptyStateText, { color: inactiveColor }]}
+                  >
                     No related words available
                   </Text>
                 </View>
@@ -355,25 +436,49 @@ export default function WordDetailScreen() {
           )}
 
           {/* Additional Information */}
-          <View style={styles.section}>
+          <View style={[styles.section, { backgroundColor: cardColor }]}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Additional Information</Text>
+              <Text style={[styles.sectionTitle, { color: primaryColor }]}>
+                Additional Information
+              </Text>
             </View>
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Part of Speech:</Text>
-              <Text style={styles.infoValue}>Noun, Verb</Text>
+              <Text style={[styles.infoLabel, { color: inactiveColor }]}>
+                Part of Speech:
+              </Text>
+              <Text style={[styles.infoValue, { color: textColor }]}>
+                Noun, Verb
+              </Text>
             </View>
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Category:</Text>
-              <Text style={styles.infoValue}>Common Phrases</Text>
+              <Text style={[styles.infoLabel, { color: inactiveColor }]}>
+                Category:
+              </Text>
+              <Text style={[styles.infoValue, { color: textColor }]}>
+                Common Phrases
+              </Text>
             </View>
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Difficulty:</Text>
+              <Text style={[styles.infoLabel, { color: inactiveColor }]}>
+                Difficulty:
+              </Text>
               <View style={styles.difficultyContainer}>
-                <View style={styles.difficultyBar}>
-                  <View style={[styles.difficultyFill, { width: "40%" }]} />
+                <View
+                  style={[
+                    styles.difficultyBar,
+                    { backgroundColor: colors?.border || "#e0e0e0" },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.difficultyFill,
+                      { width: "40%", backgroundColor: primaryColor },
+                    ]}
+                  />
                 </View>
-                <Text style={styles.difficultyText}>Beginner</Text>
+                <Text style={[styles.difficultyText, { color: primaryColor }]}>
+                  Beginner
+                </Text>
               </View>
             </View>
           </View>
@@ -381,7 +486,12 @@ export default function WordDetailScreen() {
       </Animated.ScrollView>
 
       {/* Bottom Action Bar */}
-      <View style={styles.actionBar}>
+      <View
+        style={[
+          styles.actionBar,
+          { backgroundColor: cardColor, borderTopColor: borderColor },
+        ]}
+      >
         <TouchableOpacity
           style={styles.actionButton}
           onPress={handleToggleFavorite}
@@ -389,22 +499,28 @@ export default function WordDetailScreen() {
           <Ionicons
             name={isFavorited ? "star" : "star-outline"}
             size={24}
-            color={isFavorited ? "#FFD700" : "#008080"}
+            color={isFavorited ? "#FFD700" : primaryColor}
           />
-          <Text style={styles.actionText}>Favorite</Text>
+          <Text style={[styles.actionText, { color: primaryColor }]}>
+            Favorite
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.actionButton}
           onPress={handlePlayPronunciation}
         >
-          <Ionicons name="volume-high-outline" size={24} color="#008080" />
-          <Text style={styles.actionText}>Listen</Text>
+          <Ionicons name="volume-high-outline" size={24} color={primaryColor} />
+          <Text style={[styles.actionText, { color: primaryColor }]}>
+            Listen
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
-          <Ionicons name="share-outline" size={24} color="#008080" />
-          <Text style={styles.actionText}>Share</Text>
+          <Ionicons name="share-outline" size={24} color={primaryColor} />
+          <Text style={[styles.actionText, { color: primaryColor }]}>
+            Share
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -530,7 +646,6 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   activeTabText: {
-    color: "#008080",
     fontWeight: "600",
   },
   example: {

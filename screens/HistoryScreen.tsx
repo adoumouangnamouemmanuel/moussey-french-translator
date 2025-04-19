@@ -1,159 +1,295 @@
 "use client";
 
+import { useState } from "react";
 import {
   StyleSheet,
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   StatusBar,
-  TextInput,
+  FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useAppContext } from "../context/AppContext";
-import { useState } from "react";
+import { LinearGradient } from "expo-linear-gradient";
+import { useTheme } from "../context/ThemeContext"; // Import useTheme
 
-// Mock history data - in a real app, you would get this from your database
-const mockHistoryItems = [
-  { id: "1", french: "chaste", moussey: "chaste", timestamp: new Date() },
-  { id: "2", french: "cafard", moussey: "cockroach", timestamp: new Date() },
+// Mock history data
+const historyItems = [
+  {
+    id: "1",
+    word: "bonjour",
+    translation: "hello",
+    type: "dictionary",
+    timestamp: "Aujourd'hui, 10:30",
+  },
+  {
+    id: "2",
+    phrase: "Comment allez-vous?",
+    translation: "How are you?",
+    type: "translator",
+    timestamp: "Aujourd'hui, 09:15",
+  },
   {
     id: "3",
-    french: "invocation",
-    moussey: "invocation",
-    timestamp: new Date(),
+    word: "maison",
+    translation: "house",
+    type: "dictionary",
+    timestamp: "Hier, 18:45",
   },
-  { id: "4", french: "caméléon", moussey: "chameleon", timestamp: new Date() },
-  { id: "5", french: "péter", moussey: "fart", timestamp: new Date() },
-  { id: "6", french: "peter", moussey: "peter", timestamp: new Date() },
-  { id: "7", french: "olive", moussey: "olive", timestamp: new Date() },
-  { id: "8", french: "sketch", moussey: "sketch", timestamp: new Date() },
-  { id: "9", french: "bourgeois", moussey: "bourgeois", timestamp: new Date() },
-  { id: "10", french: "rôti", moussey: "roast", timestamp: new Date() },
-  { id: "11", french: "brochette", moussey: "skewer", timestamp: new Date() },
-  { id: "12", french: "cuit", moussey: "cooked", timestamp: new Date() },
   {
-    id: "13",
-    french: "chenille",
-    moussey: "caterpillar",
-    timestamp: new Date(),
+    id: "4",
+    word: "merci",
+    translation: "thank you",
+    type: "dictionary",
+    timestamp: "Hier, 16:20",
   },
-  { id: "14", french: "clignoter", moussey: "flash", timestamp: new Date() },
-  { id: "15", french: "goudron", moussey: "tar", timestamp: new Date() },
+  {
+    id: "5",
+    phrase: "Je voudrais un café",
+    translation: "I would like a coffee",
+    type: "translator",
+    timestamp: "Il y a 2 jours",
+  },
+  {
+    id: "6",
+    word: "famille",
+    translation: "family",
+    type: "dictionary",
+    timestamp: "Il y a 3 jours",
+  },
+];
+
+// Filter options
+const filterOptions = [
+  { id: "all", name: "Tous" },
+  { id: "dictionary", name: "Dictionnaire" },
+  { id: "translator", name: "Traducteur" },
 ];
 
 export default function HistoryScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  const { clearHistory } = useAppContext();
-
-  const [isSearchMode, setIsSearchMode] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const { colors } = useTheme(); // Use theme colors
+  const [selectedFilter, setSelectedFilter] = useState("all");
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   const filteredHistory =
-    searchQuery.trim() === ""
-      ? mockHistoryItems
-      : mockHistoryItems.filter(
-          (item) =>
-            item.french.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.moussey.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+    selectedFilter === "all"
+      ? historyItems
+      : historyItems.filter((item) => item.type === selectedFilter);
+
+  const toggleSelection = (id: string) => {
+    if (selectedItems.includes(id)) {
+      setSelectedItems(selectedItems.filter((itemId) => itemId !== id));
+    } else {
+      setSelectedItems([...selectedItems, id]);
+    }
+  };
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    setSelectedItems([]);
+  };
+
+  const selectAll = () => {
+    setSelectedItems(filteredHistory.map((item) => item.id));
+  };
+
+  const deleteSelected = () => {
+    // In a real app, this would delete the selected items
+    // For now, we'll just exit selection mode
+    setIsSelectionMode(false);
+    setSelectedItems([]);
+  };
+
+  const clearHistory = () => {
+    // In a real app, this would clear the history
+    // For now, we'll just show a console message
+    console.log("History cleared");
+  };
 
   return (
-    <View style={styles.container}>
-      <StatusBar backgroundColor="#008080" barStyle="light-content" />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar backgroundColor={colors.primary} barStyle="light-content" />
 
-      <View style={styles.header}>
-        {isSearchMode ? (
-          <View style={styles.searchHeader}>
-            <TouchableOpacity
-              onPress={() => {
-                setIsSearchMode(false);
-                setSearchQuery("");
-              }}
-            >
-              <Ionicons name="arrow-back" size={24} color="white" />
-            </TouchableOpacity>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search history..."
-              placeholderTextColor="rgba(255,255,255,0.7)"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              autoFocus
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery("")}>
-                <Ionicons name="close-circle" size={20} color="white" />
-              </TouchableOpacity>
-            )}
-          </View>
-        ) : (
-          <>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back" size={24} color="white" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>French → Moussey</Text>
-            <View style={styles.headerActions}>
+      {/* Header */}
+      <LinearGradient
+        colors={colors.headerBackground as [string, string]}
+        style={styles.header}
+      >
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Historique</Text>
+          {isSelectionMode ? (
+            <View style={styles.selectionActions}>
               <TouchableOpacity
-                style={styles.headerButton}
-                onPress={() => setIsSearchMode(true)}
+                style={styles.selectionAction}
+                onPress={selectAll}
               >
-                <Ionicons name="search" size={24} color="white" />
+                <Ionicons name="checkmark-done" size={24} color="white" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.headerButton}>
-                <Ionicons name="trash-outline" size={24} color="white" />
+              <TouchableOpacity
+                style={styles.selectionAction}
+                onPress={deleteSelected}
+              >
+                <Ionicons name="trash" size={24} color="white" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.selectionAction}
+                onPress={toggleSelectionMode}
+              >
+                <Ionicons name="close" size={24} color="white" />
               </TouchableOpacity>
             </View>
-          </>
-        )}
+          ) : (
+            <View style={styles.headerActions}>
+              <TouchableOpacity
+                style={styles.headerAction}
+                onPress={clearHistory}
+              >
+                <Ionicons name="trash-outline" size={24} color="white" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.headerAction}
+                onPress={toggleSelectionMode}
+              >
+                <Ionicons name="ellipsis-vertical" size={24} color="white" />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </LinearGradient>
+
+      {/* Filter tabs */}
+      <View style={[styles.filterContainer, { backgroundColor: colors.card }]}>
+        {filterOptions.map((option) => (
+          <TouchableOpacity
+            key={option.id}
+            style={[
+              styles.filterOption,
+              selectedFilter === option.id && styles.filterOptionActive,
+              selectedFilter === option.id && {
+                borderBottomColor: colors.primary,
+              },
+            ]}
+            onPress={() => setSelectedFilter(option.id)}
+          >
+            <Text
+              style={[
+                styles.filterText,
+                {
+                  color:
+                    selectedFilter === option.id
+                      ? colors.primary
+                      : colors.inactive,
+                },
+              ]}
+            >
+              {option.name}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
+      {/* History list */}
       <FlatList
         data={filteredHistory}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.historyItem}>
-            <View style={styles.wordPair}>
-              <Text style={styles.french}>{item.french}</Text>
-              <Text style={styles.moussey}>{item.moussey}</Text>
+          <TouchableOpacity
+            style={[
+              styles.historyItem,
+              { backgroundColor: colors.card },
+              isSelectionMode &&
+                selectedItems.includes(item.id) && {
+                  backgroundColor: `${colors.primary}20`,
+                },
+            ]}
+            onPress={() => (isSelectionMode ? toggleSelection(item.id) : null)}
+            onLongPress={() => {
+              if (!isSelectionMode) {
+                setIsSelectionMode(true);
+                toggleSelection(item.id);
+              }
+            }}
+          >
+            {isSelectionMode && (
+              <View
+                style={[
+                  styles.selectionIndicator,
+                  {
+                    borderColor: colors.primary,
+                    backgroundColor: selectedItems.includes(item.id)
+                      ? colors.primary
+                      : "transparent",
+                  },
+                ]}
+              >
+                {selectedItems.includes(item.id) && (
+                  <Ionicons name="checkmark" size={16} color="white" />
+                )}
+              </View>
+            )}
+            <View style={styles.historyItemContent}>
+              <View style={styles.historyItemHeader}>
+                <Text style={[styles.historyItemTitle, { color: colors.text }]}>
+                  {"word" in item ? item.word : item.phrase}
+                </Text>
+                <View
+                  style={[
+                    styles.historyItemTypeBadge,
+                    { backgroundColor: `${colors.primary}20` },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.historyItemTypeText,
+                      { color: colors.primary },
+                    ]}
+                  >
+                    {item.type === "dictionary" ? "Dictionnaire" : "Traducteur"}
+                  </Text>
+                </View>
+              </View>
+              <Text
+                style={[
+                  styles.historyItemTranslation,
+                  { color: colors.inactive },
+                ]}
+              >
+                {item.translation}
+              </Text>
+              <Text
+                style={[
+                  styles.historyItemTimestamp,
+                  { color: colors.inactive },
+                ]}
+              >
+                {item.timestamp}
+              </Text>
             </View>
-            <TouchableOpacity style={styles.deleteButton}>
-              <Ionicons name="close" size={20} color="#666" />
-            </TouchableOpacity>
-          </View>
+            {!isSelectionMode && (
+              <TouchableOpacity style={styles.favoriteButton}>
+                <Ionicons
+                  name="heart-outline"
+                  size={24}
+                  color={colors.inactive}
+                />
+              </TouchableOpacity>
+            )}
+          </TouchableOpacity>
         )}
+        contentContainerStyle={styles.historyList}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons
-              name={searchQuery ? "search" : "time-outline"}
-              size={60}
-              color="#cccccc"
-            />
-            <Text style={styles.emptyText}>
-              {searchQuery ? "No matching results found" : "No history yet"}
+            <Ionicons name="time-outline" size={50} color={colors.inactive} />
+            <Text style={[styles.emptyText, { color: colors.text }]}>
+              Aucun historique
             </Text>
-            <Text style={styles.emptySubtext}>
-              {searchQuery
-                ? "Try a different search term"
-                : "Words you view will appear here"}
+            <Text style={[styles.emptySubtext, { color: colors.inactive }]}>
+              Votre historique de recherche apparaîtra ici
             </Text>
           </View>
         }
       />
-
-      <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.bottomButton}>
-          <Ionicons name="swap-horizontal" size={24} color="#666" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomButton}>
-          <Ionicons name="search" size={24} color="#666" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomButton}>
-          <Ionicons name="ellipsis-horizontal" size={24} color="#666" />
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
@@ -161,97 +297,112 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
   },
   header: {
+    paddingTop: StatusBar.currentHeight || 15,
+    paddingBottom: 15,
+    paddingHorizontal: 15,
+  },
+  headerContent: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#008080",
-    padding: 15,
-    paddingTop: StatusBar.currentHeight || 15,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
     color: "white",
+    fontSize: 20,
+    fontWeight: "bold",
   },
   headerActions: {
     flexDirection: "row",
   },
-  headerButton: {
+  headerAction: {
     marginLeft: 15,
   },
-  searchHeader: {
-    flex: 1,
+  selectionActions: {
     flexDirection: "row",
-    alignItems: "center",
   },
-  searchInput: {
+  selectionAction: {
+    marginLeft: 15,
+  },
+  filterContainer: {
+    flexDirection: "row",
+    paddingVertical: 5,
+  },
+  filterOption: {
     flex: 1,
-    color: "white",
-    fontSize: 16,
-    marginLeft: 10,
-    marginRight: 5,
-    height: 40,
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  filterOptionActive: {
+    borderBottomWidth: 2,
+  },
+  filterText: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  historyList: {
+    padding: 15,
   },
   historyItem: {
-    backgroundColor: "white",
+    flexDirection: "row",
+    borderRadius: 10,
     padding: 15,
-    marginHorizontal: 10,
-    marginVertical: 5,
-    borderRadius: 8,
+    marginBottom: 10,
+  },
+  selectionIndicator: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  historyItemContent: {
+    flex: 1,
+  },
+  historyItemHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
+    marginBottom: 5,
   },
-  wordPair: {
-    flex: 1,
-  },
-  french: {
+  historyItemTitle: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "500",
   },
-  moussey: {
+  historyItemTypeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  historyItemTypeText: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  historyItemTranslation: {
     fontSize: 14,
-    color: "#333",
-    marginTop: 2,
+    marginBottom: 5,
   },
-  deleteButton: {
+  historyItemTimestamp: {
+    fontSize: 12,
+  },
+  favoriteButton: {
     padding: 5,
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
     alignItems: "center",
-    padding: 20,
-    marginTop: 50,
+    justifyContent: "center",
+    padding: 50,
   },
   emptyText: {
-    fontSize: 18,
-    color: "#666",
+    fontSize: 16,
     marginTop: 10,
   },
   emptySubtext: {
     fontSize: 14,
-    color: "#999",
-    textAlign: "center",
     marginTop: 5,
-  },
-  bottomBar: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    backgroundColor: "#f5f5f5",
-    borderTopWidth: 1,
-    borderTopColor: "#e0e0e0",
-    padding: 10,
-  },
-  bottomButton: {
-    padding: 10,
+    textAlign: "center",
   },
 });

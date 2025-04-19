@@ -5,250 +5,438 @@ import {
   StyleSheet,
   View,
   Text,
-  FlatList,
   TouchableOpacity,
-  TextInput,
+  FlatList,
   StatusBar,
+  TextInput,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { LinearGradient } from "expo-linear-gradient";
+import { useTheme } from "../context/ThemeContext"; // Import useTheme
 
 // Mock irregular verbs data
-const mockIrregularVerbs = [
+const irregularVerbs = [
   {
     id: "1",
     infinitive: "être",
-    present: "suis, es, est, sommes, êtes, sont",
-    past: "étais, étais, était, étions, étiez, étaient",
-    future: "serai, seras, sera, serons, serez, seront",
-    moussey: "Moussey equivalent",
+    translation: "to be",
+    present: ["suis", "es", "est", "sommes", "êtes", "sont"],
+    past: ["étais", "étais", "était", "étions", "étiez", "étaient"],
+    future: ["serai", "seras", "sera", "serons", "serez", "seront"],
   },
   {
     id: "2",
     infinitive: "avoir",
-    present: "ai, as, a, avons, avez, ont",
-    past: "avais, avais, avait, avions, aviez, avaient",
-    future: "aurai, auras, aura, aurons, aurez, auront",
-    moussey: "Moussey equivalent",
+    translation: "to have",
+    present: ["ai", "as", "a", "avons", "avez", "ont"],
+    past: ["avais", "avais", "avait", "avions", "aviez", "avaient"],
+    future: ["aurai", "auras", "aura", "aurons", "aurez", "auront"],
   },
   {
     id: "3",
     infinitive: "aller",
-    present: "vais, vas, va, allons, allez, vont",
-    past: "allais, allais, allait, allions, alliez, allaient",
-    future: "irai, iras, ira, irons, irez, iront",
-    moussey: "Moussey equivalent",
+    translation: "to go",
+    present: ["vais", "vas", "va", "allons", "allez", "vont"],
+    past: ["allais", "allais", "allait", "allions", "alliez", "allaient"],
+    future: ["irai", "iras", "ira", "irons", "irez", "iront"],
   },
   {
     id: "4",
     infinitive: "faire",
-    present: "fais, fais, fait, faisons, faites, font",
-    past: "faisais, faisais, faisait, faisions, faisiez, faisaient",
-    future: "ferai, feras, fera, ferons, ferez, feront",
-    moussey: "Moussey equivalent",
+    translation: "to do/make",
+    present: ["fais", "fais", "fait", "faisons", "faites", "font"],
+    past: ["faisais", "faisais", "faisait", "faisions", "faisiez", "faisaient"],
+    future: ["ferai", "feras", "fera", "ferons", "ferez", "feront"],
   },
   {
     id: "5",
     infinitive: "dire",
-    present: "dis, dis, dit, disons, dites, disent",
-    past: "disais, disais, disait, disions, disiez, disaient",
-    future: "dirai, diras, dira, dirons, direz, diront",
-    moussey: "Moussey equivalent",
+    translation: "to say",
+    present: ["dis", "dis", "dit", "disons", "dites", "disent"],
+    past: ["disais", "disais", "disait", "disions", "disiez", "disaient"],
+    future: ["dirai", "diras", "dira", "dirons", "direz", "diront"],
   },
 ];
 
 export default function IrregularVerbsScreen() {
+  const { colors } = useTheme(); // Use theme colors
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [isSearchMode, setIsSearchMode] = useState(false);
+  const [selectedVerb, setSelectedVerb] = useState<string | null>(null);
 
-  const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  // Filter verbs based on search query
+  const filteredVerbs =
+    searchQuery.trim() === ""
+      ? irregularVerbs
+      : irregularVerbs.filter(
+          (verb) =>
+            verb.infinitive.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            verb.translation.toLowerCase().includes(searchQuery.toLowerCase())
+        );
 
-  const filteredVerbs = mockIrregularVerbs.filter((verb) =>
-    verb.infinitive.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const renderVerbDetails = () => {
+    const verb = irregularVerbs.find((v) => v.id === selectedVerb);
+    if (!verb) return null;
 
-  const toggleExpand = (id: string) => {
-    setExpandedId(expandedId === id ? null : id);
+    const pronouns = ["je/j'", "tu", "il/elle", "nous", "vous", "ils/elles"];
+
+    return (
+      <View
+        style={[styles.verbDetailsContainer, { backgroundColor: colors.card }]}
+      >
+        <View style={styles.verbDetailsHeader}>
+          <TouchableOpacity
+            onPress={() => setSelectedVerb(null)}
+            style={styles.backButton}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <View style={styles.verbTitleContainer}>
+            <Text style={[styles.verbTitle, { color: colors.text }]}>
+              {verb.infinitive}
+            </Text>
+            <Text style={[styles.verbTranslation, { color: colors.inactive }]}>
+              {verb.translation}
+            </Text>
+          </View>
+          <TouchableOpacity style={styles.favoriteButton}>
+            <Ionicons name="star-outline" size={24} color={colors.inactive} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.conjugationContainer}>
+          <View
+            style={[
+              styles.conjugationHeader,
+              { backgroundColor: colors.border },
+            ]}
+          >
+            <Text
+              style={[styles.conjugationHeaderCell, { color: colors.text }]}
+            >
+              Pronoun
+            </Text>
+            <Text
+              style={[styles.conjugationHeaderCell, { color: colors.text }]}
+            >
+              Present
+            </Text>
+            <Text
+              style={[styles.conjugationHeaderCell, { color: colors.text }]}
+            >
+              Past
+            </Text>
+            <Text
+              style={[styles.conjugationHeaderCell, { color: colors.text }]}
+            >
+              Future
+            </Text>
+          </View>
+
+          {pronouns.map((pronoun, index) => (
+            <View
+              key={index}
+              style={[
+                styles.conjugationRow,
+                { borderBottomColor: colors.border },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.conjugationCell,
+                  styles.pronounCell,
+                  { color: colors.primary },
+                ]}
+              >
+                {pronoun}
+              </Text>
+              <Text style={[styles.conjugationCell, { color: colors.text }]}>
+                {verb.present[index]}
+              </Text>
+              <Text style={[styles.conjugationCell, { color: colors.text }]}>
+                {verb.past[index]}
+              </Text>
+              <Text style={[styles.conjugationCell, { color: colors.text }]}>
+                {verb.future[index]}
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.examplesContainer}>
+          <Text style={[styles.examplesTitle, { color: colors.text }]}>
+            Examples
+          </Text>
+          <View
+            style={[styles.exampleItem, { backgroundColor: colors.background }]}
+          >
+            <Text style={[styles.exampleText, { color: colors.text }]}>
+              Je {verb.present[0]} content.
+            </Text>
+            <Text
+              style={[styles.exampleTranslation, { color: colors.inactive }]}
+            >
+              I am happy.
+            </Text>
+          </View>
+          <View
+            style={[styles.exampleItem, { backgroundColor: colors.background }]}
+          >
+            <Text style={[styles.exampleText, { color: colors.text }]}>
+              Tu {verb.past[1]} là hier.
+            </Text>
+            <Text
+              style={[styles.exampleTranslation, { color: colors.inactive }]}
+            >
+              You were there yesterday.
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#008080" barStyle="light-content" />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar backgroundColor={colors.primary} barStyle="light-content" />
 
-      <View style={styles.header}>
-        {isSearchMode ? (
-          <View style={styles.searchHeader}>
+      {/* Header */}
+      <LinearGradient
+        colors={colors.headerBackground as [string, string]}
+        style={styles.header}
+      >
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Verbes Irréguliers</Text>
+          <TouchableOpacity>
+            <Ionicons name="options" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Search bar */}
+        <View
+          style={[
+            styles.searchContainer,
+            { backgroundColor: "rgba(255,255,255,0.2)" },
+          ]}
+        >
+          <Ionicons
+            name="search"
+            size={20}
+            color="white"
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Rechercher un verbe..."
+            placeholderTextColor="rgba(255,255,255,0.7)"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
+              <Ionicons name="close-circle" size={20} color="white" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </LinearGradient>
+
+      {selectedVerb ? (
+        renderVerbDetails()
+      ) : (
+        <FlatList
+          data={filteredVerbs}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
             <TouchableOpacity
-              onPress={() => {
-                setIsSearchMode(false);
-                setSearchQuery("");
-              }}
+              style={[styles.verbItem, { backgroundColor: colors.card }]}
+              onPress={() => setSelectedVerb(item.id)}
             >
-              <Ionicons name="arrow-back" size={24} color="white" />
-            </TouchableOpacity>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search for a verb..."
-              placeholderTextColor="rgba(255,255,255,0.7)"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              autoFocus
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery("")}>
-                <Ionicons name="close-circle" size={20} color="white" />
-              </TouchableOpacity>
-            )}
-          </View>
-        ) : (
-          <>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back" size={24} color="white" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Moussey → French</Text>
-            <TouchableOpacity onPress={() => setIsSearchMode(true)}>
-              <Ionicons name="search" size={24} color="white" />
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
-
-      <FlatList
-        data={filteredVerbs}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.verbItem}
-            onPress={() => toggleExpand(item.id)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.verbHeader}>
-              <Text style={styles.infinitive}>{item.infinitive}</Text>
-              <Text style={styles.moussey}>{item.moussey}</Text>
-              <Ionicons
-                name={expandedId === item.id ? "chevron-up" : "chevron-down"}
-                size={20}
-                color="#008080"
-              />
-            </View>
-
-            {expandedId === item.id && (
-              <View style={styles.verbDetails}>
-                <View style={styles.tenseRow}>
-                  <Text style={styles.tenseLabel}>Present:</Text>
-                  <Text style={styles.tenseValue}>{item.present}</Text>
-                </View>
-                <View style={styles.tenseRow}>
-                  <Text style={styles.tenseLabel}>Past:</Text>
-                  <Text style={styles.tenseValue}>{item.past}</Text>
-                </View>
-                <View style={styles.tenseRow}>
-                  <Text style={styles.tenseLabel}>Future:</Text>
-                  <Text style={styles.tenseValue}>{item.future}</Text>
+              <View style={styles.verbItemContent}>
+                <Text style={[styles.verbItemTitle, { color: colors.text }]}>
+                  {item.infinitive}
+                </Text>
+                <Text
+                  style={[
+                    styles.verbItemTranslation,
+                    { color: colors.inactive },
+                  ]}
+                >
+                  {item.translation}
+                </Text>
+                <View style={styles.verbItemSamples}>
+                  <Text
+                    style={[styles.verbItemSample, { color: colors.primary }]}
+                  >
+                    je {item.present[0]}, tu {item.present[1]}, il{" "}
+                    {item.present[2]}...
+                  </Text>
                 </View>
               </View>
-            )}
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No verbs found</Text>
-          </View>
-        }
-      />
-    </SafeAreaView>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={colors.inactive}
+              />
+            </TouchableOpacity>
+          )}
+          contentContainerStyle={styles.verbsList}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="search" size={50} color={colors.inactive} />
+              <Text style={[styles.emptyText, { color: colors.inactive }]}>
+                Aucun verbe trouvé
+              </Text>
+            </View>
+          }
+        />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
   },
   header: {
+    paddingTop: StatusBar.currentHeight || 15,
+    paddingBottom: 15,
+    paddingHorizontal: 15,
+  },
+  headerContent: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#008080",
-    padding: 15,
-    paddingTop: StatusBar.currentHeight || 15,
+    marginBottom: 15,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
     color: "white",
+    fontSize: 20,
+    fontWeight: "bold",
   },
-  searchHeader: {
-    flex: 1,
+  searchContainer: {
     flexDirection: "row",
     alignItems: "center",
+    borderRadius: 20,
+    paddingHorizontal: 10,
+  },
+  searchIcon: {
+    marginRight: 10,
   },
   searchInput: {
     flex: 1,
-    color: "white",
-    fontSize: 16,
-    marginLeft: 10,
-    marginRight: 5,
     height: 40,
+    color: "white",
+  },
+  verbsList: {
+    padding: 15,
   },
   verbItem: {
-    backgroundColor: "white",
-    padding: 15,
-    marginHorizontal: 10,
-    marginVertical: 5,
-    borderRadius: 8,
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-  },
-  verbHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
   },
-  infinitive: {
+  verbItemContent: {
+    flex: 1,
+  },
+  verbItemTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#008080",
-  },
-  moussey: {
-    fontSize: 14,
-    color: "#666",
-    flex: 1,
-    marginLeft: 10,
-  },
-  verbDetails: {
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#f0f0f0",
-  },
-  tenseRow: {
-    flexDirection: "row",
     marginBottom: 5,
   },
-  tenseLabel: {
-    width: 70,
-    fontWeight: "bold",
-    color: "#333",
+  verbItemTranslation: {
+    fontSize: 14,
+    marginBottom: 5,
   },
-  tenseValue: {
-    flex: 1,
-    color: "#666",
+  verbItemSamples: {
+    marginTop: 5,
+  },
+  verbItemSample: {
+    fontSize: 12,
+    fontStyle: "italic",
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    justifyContent: "center",
+    padding: 50,
   },
   emptyText: {
     fontSize: 16,
-    color: "#666",
+    marginTop: 10,
+  },
+  verbDetailsContainer: {
+    flex: 1,
+    padding: 15,
+  },
+  verbDetailsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  backButton: {
+    marginRight: 15,
+  },
+  verbTitleContainer: {
+    flex: 1,
+  },
+  verbTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  verbTranslation: {
+    fontSize: 16,
+  },
+  favoriteButton: {
+    padding: 5,
+  },
+  conjugationContainer: {
+    marginBottom: 20,
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  conjugationHeader: {
+    flexDirection: "row",
+    padding: 10,
+  },
+  conjugationHeaderCell: {
+    flex: 1,
+    textAlign: "center",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  conjugationRow: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    paddingVertical: 10,
+  },
+  conjugationCell: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 14,
+  },
+  pronounCell: {
+    fontWeight: "500",
+  },
+  examplesContainer: {
+    marginTop: 10,
+  },
+  examplesTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  exampleItem: {
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  exampleText: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  exampleTranslation: {
+    fontSize: 14,
+    fontStyle: "italic",
   },
 });
