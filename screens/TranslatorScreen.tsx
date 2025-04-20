@@ -17,13 +17,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
-import { useTheme } from "../context/ThemeContext"; // Import useTheme
+import { useTheme } from "../context/ThemeContext";
+import { translateText } from "../utils/dictionary";
 
 type Language = "moussey" | "french";
 
 export default function TranslatorScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  const { colors } = useTheme(); // Get theme colors
+  const { colors } = useTheme();
   const [inputText, setInputText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [fromLanguage, setFromLanguage] = useState<Language>("moussey");
@@ -59,7 +60,7 @@ export default function TranslatorScreen() {
     setHasTranslated(translatedText !== "");
   };
 
-  const translateText = () => {
+  const translateTextHandler = () => {
     if (!inputText.trim()) {
       return;
     }
@@ -95,37 +96,9 @@ export default function TranslatorScreen() {
     Keyboard.dismiss();
     setIsLoading(true);
 
-    // Simulate translation API call
+    // Use the translation function from utils/dictionary
     setTimeout(() => {
-      // Mock translation - replace with actual translation logic
-      const mockTranslations: Record<string, string> = {
-        hello: "bonjour",
-        goodbye: "au revoir",
-        "thank you": "merci",
-        bonjour: "hello",
-        "au revoir": "goodbye",
-        merci: "thank you",
-        "good morning": "bonjour",
-        "good evening": "bonsoir",
-        "good night": "bonne nuit",
-        "how are you": "comment allez-vous",
-        "I'm fine": "je vais bien",
-        "what is your name": "comment vous appelez-vous",
-        "my name is": "je m'appelle",
-        "nice to meet you": "enchanté",
-        "where is": "où est",
-        "how much": "combien",
-        "I don't understand": "je ne comprends pas",
-        "can you help me": "pouvez-vous m'aider",
-        "excuse me": "excusez-moi",
-      };
-
-      const result =
-        mockTranslations[inputText.toLowerCase()] ||
-        `[${
-          fromLanguage === "moussey" ? "French" : "Moussey"
-        } translation would appear here]`;
-
+      const result = translateText(inputText, fromLanguage);
       setTranslatedText(result);
       setIsLoading(false);
       setHasTranslated(true);
@@ -146,9 +119,10 @@ export default function TranslatorScreen() {
   });
 
   // Use theme colors or fallback to original colors
-  const headerColors: [string, string, ...string[]] = colors?.headerBackground?.length >= 2
-    ? (colors.headerBackground as [string, string, ...string[]])
-    : ["#00a0a0", "#008080"];
+  const headerColors: [string, string, ...string[]] =
+    colors?.headerBackground?.length >= 2
+      ? (colors.headerBackground as [string, string, ...string[]])
+      : ["#00a0a0", "#008080"];
   const primaryColor = colors?.primary || "#008080";
   const backgroundColor = colors?.background || "#f5f5f5";
   const cardColor = colors?.card || "white";
@@ -203,7 +177,7 @@ export default function TranslatorScreen() {
           multiline
           placeholderTextColor={inactiveColor}
           returnKeyType="done"
-          onSubmitEditing={translateText}
+          onSubmitEditing={translateTextHandler}
         />
 
         <View style={styles.inputButtons}>
@@ -239,7 +213,7 @@ export default function TranslatorScreen() {
       {/* Translate button */}
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={translateText}
+        onPress={translateTextHandler}
         disabled={!inputText.trim() || isLoading}
       >
         <Animated.View
@@ -494,7 +468,7 @@ const styles = StyleSheet.create({
     elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.1,
     shadowRadius: 3,
   },
   translationContainerEmpty: {
@@ -517,7 +491,6 @@ const styles = StyleSheet.create({
   },
   translatedText: {
     fontSize: 16,
-    color: "#333",
     lineHeight: 24,
   },
   emptyTranslation: {
@@ -527,32 +500,30 @@ const styles = StyleSheet.create({
   },
   emptyTranslationText: {
     marginTop: 10,
-    color: "#999",
     textAlign: "center",
+    fontSize: 14,
   },
   bottomButtons: {
     flexDirection: "row",
     justifyContent: "space-around",
-    backgroundColor: "#008080",
     padding: 15,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    marginTop: 10,
+    margin: 10,
+    borderRadius: 12,
+    marginBottom: 30,
   },
   bottomButton: {
     width: 50,
     height: 50,
-    borderRadius: 25,
     justifyContent: "center",
     alignItems: "center",
-    overflow: "hidden",
   },
   bottomButtonDisabled: {
-    opacity: 0.7,
+    opacity: 0.5,
   },
   bottomButtonGradient: {
-    width: "100%",
-    height: "100%",
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     justifyContent: "center",
     alignItems: "center",
   },

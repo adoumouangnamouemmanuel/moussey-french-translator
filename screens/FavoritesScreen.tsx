@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -8,74 +8,42 @@ import {
   TouchableOpacity,
   FlatList,
   StatusBar,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useTheme } from "../context/ThemeContext"; // Import useTheme
-
-// Mock favorite words
-const favoriteWords = [
-  {
-    id: "1",
-    word: "bonjour",
-    translation: "hello",
-    phonetic: "/bɔ̃.ʒuʁ/",
-    partOfSpeech: "interjection",
-    dateAdded: "Il y a 2 jours",
-  },
-  {
-    id: "2",
-    word: "maison",
-    translation: "house",
-    phonetic: "/mɛ.zɔ̃/",
-    partOfSpeech: "nom",
-    dateAdded: "Il y a 1 semaine",
-  },
-  {
-    id: "3",
-    word: "amour",
-    translation: "love",
-    phonetic: "/a.muʁ/",
-    partOfSpeech: "nom",
-    dateAdded: "Il y a 2 semaines",
-  },
-  {
-    id: "4",
-    word: "famille",
-    translation: "family",
-    phonetic: "/fa.mij/",
-    partOfSpeech: "nom",
-    dateAdded: "Il y a 3 semaines",
-  },
-];
-
-// Mock favorite phrases
-const favoritePhrases = [
-  {
-    id: "1",
-    phrase: "Comment allez-vous?",
-    translation: "How are you?",
-    dateAdded: "Il y a 3 jours",
-  },
-  {
-    id: "2",
-    phrase: "Je voudrais un café, s'il vous plaît.",
-    translation: "I would like a coffee, please.",
-    dateAdded: "Il y a 5 jours",
-  },
-  {
-    id: "3",
-    phrase: "Où est la gare?",
-    translation: "Where is the train station?",
-    dateAdded: "Il y a 1 semaine",
-  },
-];
+import { useTheme } from "../context/ThemeContext";
+import { useAppContext } from "../context/AppContext";
+import { getFavoriteEntries, type DictionaryEntry } from "../utils/dictionary";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 export default function FavoritesScreen() {
-  const { colors } = useTheme(); // Use theme colors
+  const { colors } = useTheme();
+  const { favorites, toggleFavorite } = useAppContext();
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const [activeTab, setActiveTab] = useState("words"); // 'words' or 'phrases'
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [favoriteWords, setFavoriteWords] = useState<DictionaryEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [favoritePhrases, setFavoritePhrases] = useState<any[]>([]); // Added declaration for favoritePhrases
+
+  useEffect(() => {
+    loadFavorites();
+  }, [favorites]);
+
+  const loadFavorites = async () => {
+    setIsLoading(true);
+    try {
+      const entries = await getFavoriteEntries();
+      setFavoriteWords(entries);
+    } catch (error) {
+      console.error("Failed to load favorites", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const toggleSelection = (id: string) => {
     if (selectedItems.includes(id)) {
@@ -91,21 +59,18 @@ export default function FavoritesScreen() {
   };
 
   const selectAll = () => {
-    if (activeTab === "words") {
-      setSelectedItems(favoriteWords.map((item) => item.id));
-    } else {
-      setSelectedItems(favoritePhrases.map((item) => item.id));
-    }
+    setSelectedItems(favoriteWords.map((item) => item.id));
   };
 
   const deleteSelected = () => {
-    // In a real app, this would delete the selected items
-    // For now, we'll just exit selection mode
+    selectedItems.forEach((id) => {
+      toggleFavorite(id);
+    });
     setIsSelectionMode(false);
     setSelectedItems([]);
   };
 
-  const renderWordItem = ({ item }: { item: (typeof favoriteWords)[0] }) => (
+  const renderWordItem = ({ item }: { item: DictionaryEntry }) => (
     <TouchableOpacity
       style={[
         styles.wordItem,
@@ -115,7 +80,13 @@ export default function FavoritesScreen() {
             backgroundColor: `${colors.primary}20`,
           },
       ]}
-      onPress={() => (isSelectionMode ? toggleSelection(item.id) : null)}
+      onPress={() => {
+        if (isSelectionMode) {
+          toggleSelection(item.id);
+        } else {
+          navigation.navigate("WordDetail", { word: item });
+        }
+      }}
       onLongPress={() => {
         if (!isSelectionMode) {
           setIsSelectionMode(true);
@@ -143,101 +114,46 @@ export default function FavoritesScreen() {
       <View style={styles.wordItemContent}>
         <View style={styles.wordItemHeader}>
           <Text style={[styles.wordItemTitle, { color: colors.text }]}>
-            {item.word}
+            {item.moussey}
           </Text>
           <Text style={[styles.wordItemPhonetic, { color: colors.inactive }]}>
-            {item.phonetic}
+            {item.pronunciation || ""}
           </Text>
         </View>
         <Text style={[styles.wordItemTranslation, { color: colors.inactive }]}>
-          {item.translation}
+          {item.french}
         </Text>
         <View style={styles.wordItemFooter}>
-          <View
-            style={[
-              styles.wordItemBadge,
-              { backgroundColor: `${colors.primary}20` },
-            ]}
-          >
-            <Text style={[styles.wordItemBadgeText, { color: colors.primary }]}>
-              {item.partOfSpeech.charAt(0).toUpperCase() +
-                item.partOfSpeech.slice(1)}
-            </Text>
-          </View>
-          <Text style={[styles.wordItemDate, { color: colors.inactive }]}>
-            {item.dateAdded}
-          </Text>
+          {item.partsOfSpeech && item.partsOfSpeech.length > 0 && (
+            <View
+              style={[
+                styles.wordItemBadge,
+                { backgroundColor: `${colors.primary}20` },
+              ]}
+            >
+              <Text
+                style={[styles.wordItemBadgeText, { color: colors.primary }]}
+              >
+                {item.partsOfSpeech[0].charAt(0).toUpperCase() +
+                  item.partsOfSpeech[0].slice(1)}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
       {!isSelectionMode && (
-        <TouchableOpacity style={styles.favoriteButton}>
+        <TouchableOpacity
+          style={styles.favoriteButton}
+          onPress={() => toggleFavorite(item.id)}
+        >
           <Ionicons name="heart" size={24} color="#FF6B6B" />
         </TouchableOpacity>
       )}
     </TouchableOpacity>
   );
 
-  const renderPhraseItem = ({
-    item,
-  }: {
-    item: (typeof favoritePhrases)[0];
-  }) => (
-    <TouchableOpacity
-      style={[
-        styles.phraseItem,
-        { backgroundColor: colors.card },
-        isSelectionMode &&
-          selectedItems.includes(item.id) && {
-            backgroundColor: `${colors.primary}20`,
-          },
-      ]}
-      onPress={() => (isSelectionMode ? toggleSelection(item.id) : null)}
-      onLongPress={() => {
-        if (!isSelectionMode) {
-          setIsSelectionMode(true);
-          toggleSelection(item.id);
-        }
-      }}
-    >
-      {isSelectionMode && (
-        <View
-          style={[
-            styles.selectionIndicator,
-            {
-              borderColor: colors.primary,
-              backgroundColor: selectedItems.includes(item.id)
-                ? colors.primary
-                : "transparent",
-            },
-          ]}
-        >
-          {selectedItems.includes(item.id) && (
-            <Ionicons name="checkmark" size={16} color="white" />
-          )}
-        </View>
-      )}
-      <View style={styles.phraseItemContent}>
-        <Text style={[styles.phraseItemText, { color: colors.text }]}>
-          {item.phrase}
-        </Text>
-        <Text
-          style={[styles.phraseItemTranslation, { color: colors.inactive }]}
-        >
-          {item.translation}
-        </Text>
-        <View style={styles.phraseItemFooter}>
-          <Text style={[styles.phraseItemDate, { color: colors.inactive }]}>
-            {item.dateAdded}
-          </Text>
-        </View>
-      </View>
-      {!isSelectionMode && (
-        <TouchableOpacity style={styles.favoriteButton}>
-          <Ionicons name="heart" size={24} color="#FF6B6B" />
-        </TouchableOpacity>
-      )}
-    </TouchableOpacity>
-  );
+  const renderPhraseItem = ({ item }: { item: (typeof favoritePhrases)[0] }) =>
+    null;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -323,32 +239,31 @@ export default function FavoritesScreen() {
       </View>
 
       {/* Content */}
-      {activeTab === "words" ? (
-        <FlatList
-          data={favoriteWords}
-          keyExtractor={(item) => item.id}
-          renderItem={renderWordItem}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Ionicons name="heart" size={50} color={colors.inactive} />
-              <Text style={[styles.emptyText, { color: colors.inactive }]}>
-                Aucun mot favori
-              </Text>
-            </View>
-          }
-        />
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.text }]}>
+            Chargement des favoris...
+          </Text>
+        </View>
       ) : (
         <FlatList
-          data={favoritePhrases}
+          data={activeTab === "words" ? favoriteWords : favoritePhrases}
           keyExtractor={(item) => item.id}
-          renderItem={renderPhraseItem}
+          renderItem={activeTab === "words" ? renderWordItem : renderPhraseItem}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Ionicons name="heart" size={50} color={colors.inactive} />
               <Text style={[styles.emptyText, { color: colors.inactive }]}>
-                Aucune phrase favorite
+                {activeTab === "words"
+                  ? "Aucun mot favori"
+                  : "Aucune phrase favorite"}
+              </Text>
+              <Text style={[styles.emptySubtext, { color: colors.inactive }]}>
+                {activeTab === "words"
+                  ? "Ajoutez des mots à vos favoris en appuyant sur l'icône en forme de cœur"
+                  : "Ajoutez des phrases à vos favoris en appuyant sur l'icône en forme de cœur"}
               </Text>
             </View>
           }
@@ -401,12 +316,18 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 15,
+    flexGrow: 1,
   },
   wordItem: {
     flexDirection: "row",
     borderRadius: 10,
     padding: 15,
     marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   selectionIndicator: {
     width: 24,
@@ -457,32 +378,8 @@ const styles = StyleSheet.create({
   favoriteButton: {
     padding: 5,
   },
-  phraseItem: {
-    flexDirection: "row",
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-  },
-  phraseItemContent: {
-    flex: 1,
-  },
-  phraseItemText: {
-    fontSize: 16,
-    fontWeight: "500",
-    marginBottom: 5,
-  },
-  phraseItemTranslation: {
-    fontSize: 14,
-    marginBottom: 10,
-  },
-  phraseItemFooter: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-  },
-  phraseItemDate: {
-    fontSize: 12,
-  },
   emptyContainer: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     padding: 50,
@@ -490,5 +387,20 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     marginTop: 10,
+    fontWeight: "500",
+  },
+  emptySubtext: {
+    fontSize: 14,
+    marginTop: 5,
+    textAlign: "center",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
   },
 });

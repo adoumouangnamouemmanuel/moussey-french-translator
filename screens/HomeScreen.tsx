@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -15,13 +15,45 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAppContext } from "../context/AppContext";
 import { useTheme } from "../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
-import { dailyWords, recentActivities, featureCategories } from "../data/home/homeData";
+import { getWordOfDay } from "../utils/dictionary";
+
+// Import the recentActivities and featureCategories from your original file
+import { recentActivities, featureCategories } from "../data/home/homeData";
 
 export default function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const { points } = useAppContext();
   const { colors } = useTheme();
   const [currentDailyWord, setCurrentDailyWord] = useState(0);
+  const [dailyWords, setDailyWords] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadDailyWords = async () => {
+      try {
+        setLoading(true);
+        const words = await getWordOfDay();
+
+        // Convert WordOfDayItem[] to the format expected by your UI
+        const formattedWords = words.map((item) => ({
+          moussey: item.mousseyWord.word,
+          french: item.frenchWord.word,
+          pronunciation: "", // Add pronunciation if available
+          id: item.mousseyWord.id,
+        }));
+
+        setDailyWords(formattedWords);
+      } catch (error) {
+        console.error("Error loading daily words:", error);
+        // Fallback to empty array if there's an error
+        setDailyWords([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDailyWords();
+  }, []);
 
   const nextWord = () => {
     setCurrentDailyWord((prev) => (prev + 1) % dailyWords.length);
@@ -38,7 +70,10 @@ export default function HomeScreen() {
       <StatusBar backgroundColor={colors.primary} barStyle="light-content" />
 
       {/* Header */}
-      <LinearGradient colors={colors.headerBackground as [string, string, ...string[]]} style={styles.header}>
+      <LinearGradient
+        colors={colors.headerBackground as [string, string, ...string[]]}
+        style={styles.header}
+      >
         <View style={styles.headerContent}>
           <Text style={styles.appName}>Moussey-Français</Text>
           <View style={styles.headerRight}>
@@ -81,33 +116,51 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          <View style={styles.dailyWordContent}>
-            <TouchableOpacity onPress={prevWord} style={styles.wordNavButton}>
-              <Ionicons name="chevron-back" size={24} color={colors.primary} />
-            </TouchableOpacity>
-
-            <View style={styles.wordContainer}>
-              <Text style={[styles.wordMoussey, { color: colors.text }]}>
-                {dailyWords[currentDailyWord].moussey}
-              </Text>
-              <Text
-                style={[styles.wordPronunciation, { color: colors.inactive }]}
-              >
-                {dailyWords[currentDailyWord].pronunciation}
-              </Text>
-              <Text style={[styles.wordFrench, { color: colors.primary }]}>
-                {dailyWords[currentDailyWord].french}
+          {loading ? (
+            <View style={styles.dailyWordContent}>
+              <Text style={[styles.wordMoussey, { color: colors.inactive }]}>
+                Chargement...
               </Text>
             </View>
+          ) : dailyWords.length > 0 ? (
+            <View style={styles.dailyWordContent}>
+              <TouchableOpacity onPress={prevWord} style={styles.wordNavButton}>
+                <Ionicons
+                  name="chevron-back"
+                  size={24}
+                  color={colors.primary}
+                />
+              </TouchableOpacity>
 
-            <TouchableOpacity onPress={nextWord} style={styles.wordNavButton}>
-              <Ionicons
-                name="chevron-forward"
-                size={24}
-                color={colors.primary}
-              />
-            </TouchableOpacity>
-          </View>
+              <View style={styles.wordContainer}>
+                <Text style={[styles.wordMoussey, { color: colors.text }]}>
+                  {dailyWords[currentDailyWord].moussey}
+                </Text>
+                <Text
+                  style={[styles.wordPronunciation, { color: colors.inactive }]}
+                >
+                  {dailyWords[currentDailyWord].pronunciation}
+                </Text>
+                <Text style={[styles.wordFrench, { color: colors.primary }]}>
+                  {dailyWords[currentDailyWord].french}
+                </Text>
+              </View>
+
+              <TouchableOpacity onPress={nextWord} style={styles.wordNavButton}>
+                <Ionicons
+                  name="chevron-forward"
+                  size={24}
+                  color={colors.primary}
+                />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.dailyWordContent}>
+              <Text style={[styles.wordMoussey, { color: colors.inactive }]}>
+                Aucun mot disponible
+              </Text>
+            </View>
+          )}
 
           <View
             style={[styles.dailyWordActions, { borderTopColor: colors.border }]}

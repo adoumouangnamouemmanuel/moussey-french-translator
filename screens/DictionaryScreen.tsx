@@ -20,79 +20,9 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
-import { useTheme } from "../context/ThemeContext"; // Import useTheme
-import { dictionaryData, wordSuggestions } from "../data/dictionary/dictionaryData";
-
-// Mock data - replace with your actual Moussey-French dictionary data
-// const mockDictionary = [
-//   { id: "1", moussey: "hello", french: "bonjour", pronunciation: "/bɔ̃.ʒuʁ/" },
-//   {
-//     id: "2",
-//     moussey: "goodbye",
-//     french: "au revoir",
-//     pronunciation: "/o.ʁə.vwaʁ/",
-//   },
-//   { id: "3", moussey: "thank you", french: "merci", pronunciation: "/mɛʁ.si/" },
-//   { id: "4", moussey: "yes", french: "oui", pronunciation: "/wi/" },
-//   { id: "5", moussey: "no", french: "non", pronunciation: "/nɔ̃/" },
-//   {
-//     id: "6",
-//     moussey: "please",
-//     french: "s'il vous plaît",
-//     pronunciation: "/sil vu plɛ/",
-//   },
-//   { id: "7", moussey: "sorry", french: "désolé", pronunciation: "/de.zɔ.le/" },
-//   { id: "8", moussey: "water", french: "eau", pronunciation: "/o/" },
-//   {
-//     id: "9",
-//     moussey: "food",
-//     french: "nourriture",
-//     pronunciation: "/nu.ʁi.tyʁ/",
-//   },
-//   { id: "10", moussey: "help", french: "aide", pronunciation: "/ɛd/" },
-//   {
-//     id: "11",
-//     moussey: "good morning",
-//     french: "bonjour",
-//     pronunciation: "/bɔ̃.ʒuʁ/",
-//   },
-//   {
-//     id: "12",
-//     moussey: "good evening",
-//     french: "bonsoir",
-//     pronunciation: "/bɔ̃.swaʁ/",
-//   },
-//   {
-//     id: "13",
-//     moussey: "good night",
-//     french: "bonne nuit",
-//     pronunciation: "/bɔn nɥi/",
-//   },
-//   {
-//     id: "14",
-//     moussey: "how are you",
-//     french: "comment allez-vous",
-//     pronunciation: "/kɔ.mɑ̃ ta.le vu/",
-//   },
-//   {
-//     id: "15",
-//     moussey: "I'm fine",
-//     french: "je vais bien",
-//     pronunciation: "/ʒə vɛ bjɛ̃/",
-//   },
-// ];
-
-// Word suggestions based on common searches
-// const wordSuggestions = [
-//   "hello",
-//   "thank you",
-//   "goodbye",
-//   "please",
-//   "sorry",
-//   "help",
-//   "food",
-//   "water",
-// ];
+import { useTheme } from "../context/ThemeContext";
+import { searchDictionary, getAllDictionaryEntries } from "../utils/dictionary";
+import { dictionaryData } from "../data/dictionary/dictionaryData";
 
 type WordItemProps = {
   item: {
@@ -215,6 +145,12 @@ const WordItem = ({
   );
 };
 
+// Replace the wordSuggestions mock data with common words from the dictionary
+const getWordSuggestions = (): string[] => {
+  const allEntries = getAllDictionaryEntries().slice(0, 50);
+  return allEntries.map((entry) => entry.moussey).slice(0, 8);
+};
+
 export default function DictionaryScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const { colors } = useTheme(); // Get theme colors
@@ -313,13 +249,10 @@ export default function DictionaryScreen() {
 
   // Filter words based on search query
   const filteredWords =
-    searchQuery.trim() === ""
-      ? []
-      : dictionaryData.filter(
-          (word) =>
-            word.moussey.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            word.french.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+    searchQuery.trim() === "" ? [] : searchDictionary(searchQuery, "both");
+
+  // Get word suggestions
+  const wordSuggestions = getWordSuggestions();
 
   // Filter suggestions based on search query
   const filteredSuggestions =
@@ -396,9 +329,11 @@ export default function DictionaryScreen() {
   };
 
   // Use theme colors or fallback to original colors
-  const headerColors: [string, string, ...string[]] = (colors?.headerBackground?.length >= 2 
-    ? colors.headerBackground 
-    : ["#00a0a0", "#008080"]) as [string, string, ...string[]];
+  const headerColors: [string, string, ...string[]] = (
+    colors?.headerBackground?.length >= 2
+      ? colors.headerBackground
+      : ["#00a0a0", "#008080"]
+  ) as [string, string, ...string[]];
   const primaryColor = colors?.primary || "#008080";
   const backgroundColor = colors?.background || "#f5f5f5";
   const cardColor = colors?.card || "white";
@@ -580,7 +515,7 @@ export default function DictionaryScreen() {
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => (
                     <WordItem
-                      item={item}
+                      item={{ ...item, pronunciation: item.pronunciation || "" }}
                       onPress={() => handleSelectWord(item)}
                       onPronounce={handlePronounceWord}
                       highlightText={searchQuery}

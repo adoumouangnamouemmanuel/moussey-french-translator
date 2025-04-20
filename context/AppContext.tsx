@@ -1,104 +1,99 @@
-"use client"
+// Create or update the AppContext to handle favorites
 
-import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
-import AsyncStorage from "@react-native-async-storage/async-storage"
+import React, { createContext, useContext, useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { FAVORITES_STORAGE_KEY } from "../utils/dictionary";
 
-type AppContextType = {
-  points: number
-  addPoints: (amount: number) => void
-  favorites: string[]
-  toggleFavorite: (wordId: string) => void
-  isFavorite: (wordId: string) => boolean
-  history: string[]
-  addToHistory: (wordId: string) => void
-  clearHistory: () => void
+interface AppContextType {
+  points: number;
+  addPoints: (amount: number) => void;
+  favorites: string[];
+  isFavorite: (id: string) => boolean;
+  toggleFavorite: (id: string) => void;
 }
 
-const AppContext = createContext<AppContextType | undefined>(undefined)
+const AppContext = createContext<AppContextType>({
+  points: 0,
+  addPoints: () => {},
+  favorites: [],
+  isFavorite: () => false,
+  toggleFavorite: () => {},
+});
 
-export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [points, setPoints] = useState(1100)
-  const [favorites, setFavorites] = useState<string[]>([])
-  const [history, setHistory] = useState<string[]>([])
+export const useAppContext = () => useContext(AppContext);
 
-  // Load data from AsyncStorage on app start
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [points, setPoints] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+
   useEffect(() => {
-    const loadData = async () => {
+    // Load points from storage
+    const loadPoints = async () => {
       try {
-        const storedPoints = await AsyncStorage.getItem("points")
-        const storedFavorites = await AsyncStorage.getItem("favorites")
-        const storedHistory = await AsyncStorage.getItem("history")
-
-        if (storedPoints) setPoints(Number.parseInt(storedPoints))
-        if (storedFavorites) setFavorites(JSON.parse(storedFavorites))
-        if (storedHistory) setHistory(JSON.parse(storedHistory))
+        const storedPoints = await AsyncStorage.getItem("points");
+        if (storedPoints) {
+          setPoints(parseInt(storedPoints, 10));
+        }
       } catch (error) {
-        console.error("Error loading data from AsyncStorage:", error)
+        console.error("Failed to load points", error);
       }
-    }
+    };
 
-    loadData()
-  }, [])
-
-  // Save data to AsyncStorage whenever it changes
-  useEffect(() => {
-    const saveData = async () => {
+    // Load favorites from storage
+    const loadFavorites = async () => {
       try {
-        await AsyncStorage.setItem("points", points.toString())
-        await AsyncStorage.setItem("favorites", JSON.stringify(favorites))
-        await AsyncStorage.setItem("history", JSON.stringify(history))
+        const storedFavorites = await AsyncStorage.getItem(
+          FAVORITES_STORAGE_KEY
+        );
+        if (storedFavorites) {
+          setFavorites(JSON.parse(storedFavorites));
+        }
       } catch (error) {
-        console.error("Error saving data to AsyncStorage:", error)
+        console.error("Failed to load favorites", error);
       }
-    }
+    };
 
-    saveData()
-  }, [points, favorites, history])
+    loadPoints();
+    loadFavorites();
+  }, []);
 
   const addPoints = (amount: number) => {
-    setPoints((current) => current + amount)
-  }
+    const newPoints = points + amount;
+    setPoints(newPoints);
+    AsyncStorage.setItem("points", newPoints.toString()).catch((error) => {
+      console.error("Failed to save points", error);
+    });
+  };
 
-  const toggleFavorite = (wordId: string) => {
-    setFavorites((current) => (current.includes(wordId) ? current.filter((id) => id !== wordId) : [...current, wordId]))
-  }
+  const isFavorite = (id: string) => {
+    return favorites.includes(id);
+  };
 
-  const isFavorite = (wordId: string) => {
-    return favorites.includes(wordId)
-  }
+  const toggleFavorite = (id: string) => {
+    let newFavorites: string[];
 
-  const addToHistory = (wordId: string) => {
-    setHistory((current) => {
-      // Remove if already exists to avoid duplicates
-      const filtered = current.filter((id) => id !== wordId)
-      // Add to the beginning of the array
-      return [wordId, ...filtered]
-    })
-  }
+    if (isFavorite(id)) {
+      newFavorites = favorites.filter((favId) => favId !== id);
+    } else {
+      newFavorites = [...favorites, id];
+    }
 
-  const clearHistory = () => {
-    setHistory([])
-  }
+    setFavorites(newFavorites);
+    AsyncStorage.setItem(
+      FAVORITES_STORAGE_KEY,
+      JSON.stringify(newFavorites)
+    ).catch((error) => {
+      console.error("Failed to save favorites", error);
+    });
+  };
 
-  const value = {
-    points,
-    addPoints,
-    favorites,
-    toggleFavorite,
-    isFavorite,
-    history,
-    addToHistory,
-    clearHistory,
-  }
-
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>
-}
-
-export const useAppContext = () => {
-  const context = useContext(AppContext)
-  if (context === undefined) {
-    throw new Error("useAppContext must be used within an AppProvider")
-  }
-  return context
-}
+  return (
+    <AppContext.Provider
+      value={{ points, addPoints, favorites, isFavorite, toggleFavorite }}
+    >
+      {children}
+    </AppContext.Provider>
+  );
+};

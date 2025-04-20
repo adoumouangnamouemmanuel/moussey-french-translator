@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -20,90 +20,11 @@ import {
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAppContext } from "../context/AppContext";
 import { LinearGradient } from "expo-linear-gradient";
-import { useTheme } from "../context/ThemeContext"; // Import useTheme
+import { useTheme } from "../context/ThemeContext";
+import { type DictionaryEntry, searchDictionary } from "../utils/dictionary";
 
 type WordDetailParams = {
-  word: {
-    id: string;
-    moussey: string;
-    french: string;
-    pronunciation: string;
-  };
-};
-
-// Mock examples and related words
-const mockExamples = {
-  "1": [
-    {
-      moussey: "Hello, how are you?",
-      french: "Bonjour, comment allez-vous?",
-    },
-    {
-      moussey: "Hello everyone!",
-      french: "Bonjour tout le monde!",
-    },
-  ],
-  "2": [
-    {
-      moussey: "Goodbye, see you tomorrow!",
-      french: "Au revoir, à demain!",
-    },
-  ],
-  "3": [
-    {
-      moussey: "Thank you very much.",
-      french: "Merci beaucoup.",
-    },
-    {
-      moussey: "Thank you for your help.",
-      french: "Merci pour votre aide.",
-    },
-  ],
-};
-
-const mockRelatedWords = {
-  "1": [
-    {
-      id: "11",
-      moussey: "good morning",
-      french: "bonjour",
-      pronunciation: "/bɔ̃.ʒuʁ/",
-    },
-    {
-      id: "12",
-      moussey: "good evening",
-      french: "bonsoir",
-      pronunciation: "/bɔ̃.swaʁ/",
-    },
-  ],
-  "2": [
-    {
-      id: "16",
-      moussey: "farewell",
-      french: "adieu",
-      pronunciation: "/a.djø/",
-    },
-    {
-      id: "17",
-      moussey: "see you soon",
-      french: "à bientôt",
-      pronunciation: "/a bjɛ̃.to/",
-    },
-  ],
-  "3": [
-    {
-      id: "18",
-      moussey: "please",
-      french: "s'il vous plaît",
-      pronunciation: "/sil vu plɛ/",
-    },
-    {
-      id: "19",
-      moussey: "you're welcome",
-      french: "de rien",
-      pronunciation: "/də ʁjɛ̃/",
-    },
-  ],
+  word: DictionaryEntry;
 };
 
 export default function WordDetailScreen() {
@@ -111,10 +32,11 @@ export default function WordDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const { word } = route.params;
   const { toggleFavorite, isFavorite } = useAppContext();
-  const { colors } = useTheme(); // Get theme colors
-  const [isFavorited, setIsFavorited] = useState(isFavorite(word.id));
+  const { colors } = useTheme();
+  const [isFavorited, setIsFavorited] = useState(false);
   const [activeTab, setActiveTab] = useState("examples");
   const [isPlaying, setIsPlaying] = useState(false);
+  const [relatedWords, setRelatedWords] = useState<DictionaryEntry[]>([]);
 
   // Animation values
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -135,6 +57,30 @@ export default function WordDetailScreen() {
     extrapolate: "clamp",
   });
 
+  // Check if word is favorited
+  useEffect(() => {
+    setIsFavorited(isFavorite(word.id));
+
+    // Find related words
+    if (word.relatedWords && word.relatedWords.length > 0) {
+      const related = word.relatedWords
+        .map((relatedWord) => {
+          const results = searchDictionary(relatedWord, "both");
+          return results.length > 0 ? results[0] : null;
+        })
+        .filter(Boolean) as DictionaryEntry[];
+
+      setRelatedWords(related);
+    } else {
+      // If no related words specified, find words with similar meaning
+      const results = searchDictionary(word.moussey.split(",")[0], "moussey")
+        .filter((entry) => entry.id !== word.id)
+        .slice(0, 5);
+
+      setRelatedWords(results);
+    }
+  }, [word, isFavorite]);
+
   const handleToggleFavorite = () => {
     toggleFavorite(word.id);
     setIsFavorited(!isFavorited);
@@ -151,7 +97,9 @@ export default function WordDetailScreen() {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `${word.moussey} - ${word.french} (${word.pronunciation})`,
+        message: `${word.moussey} - ${word.french} ${
+          word.pronunciation ? `(${word.pronunciation})` : ""
+        }`,
         title: "Share this word",
       });
     } catch (error) {
@@ -159,14 +107,15 @@ export default function WordDetailScreen() {
     }
   };
 
-  const examples = mockExamples[word.id as keyof typeof mockExamples] || [];
-  const relatedWords =
-    mockRelatedWords[word.id as keyof typeof mockRelatedWords] || [];
+  // Get examples from definitions
+  const examples = word.definitions?.filter((def) => def.example) || [];
 
   // Use theme colors or fallback to original colors
-  const headerColors: [string, string, ...string[]] = Array.isArray(colors?.headerBackground) && colors.headerBackground.length >= 2
-    ? colors.headerBackground as [string, string, ...string[]]
-    : ["#00a0a0", "#008080"];
+  const headerColors: [string, string, ...string[]] =
+    Array.isArray(colors?.headerBackground) &&
+    colors.headerBackground.length >= 2
+      ? (colors.headerBackground as [string, string, ...string[]])
+      : ["#00a0a0", "#008080"];
   const primaryColor = colors?.primary || "#008080";
   const backgroundColor = colors?.background || "#f5f5f5";
   const cardColor = colors?.card || "white";
@@ -201,7 +150,9 @@ export default function WordDetailScreen() {
 
           <View style={styles.wordHeader}>
             <Text style={styles.wordTitle}>{word.moussey}</Text>
-            <Text style={styles.pronunciation}>{word.pronunciation}</Text>
+            {word.pronunciation && (
+              <Text style={styles.pronunciation}>{word.pronunciation}</Text>
+            )}
           </View>
 
           <View style={styles.headerActions}>
@@ -352,7 +303,7 @@ export default function WordDetailScreen() {
                       >
                         Moussey:{" "}
                       </Text>
-                      {example.moussey}
+                      {example.example}
                     </Text>
                     <Text style={[styles.exampleText, { color: textColor }]}>
                       <Text
@@ -363,7 +314,7 @@ export default function WordDetailScreen() {
                       >
                         French:{" "}
                       </Text>
-                      {example.french}
+                      {example.exampleTranslation}
                     </Text>
                   </View>
                 ))
@@ -442,44 +393,25 @@ export default function WordDetailScreen() {
                 Additional Information
               </Text>
             </View>
-            <View style={styles.infoItem}>
-              <Text style={[styles.infoLabel, { color: inactiveColor }]}>
-                Part of Speech:
-              </Text>
-              <Text style={[styles.infoValue, { color: textColor }]}>
-                Noun, Verb
-              </Text>
-            </View>
+            {word.partsOfSpeech && word.partsOfSpeech.length > 0 && (
+              <View style={styles.infoItem}>
+                <Text style={[styles.infoLabel, { color: inactiveColor }]}>
+                  Part of Speech:
+                </Text>
+                <Text style={[styles.infoValue, { color: textColor }]}>
+                  {word.partsOfSpeech.join(", ")}
+                </Text>
+              </View>
+            )}
             <View style={styles.infoItem}>
               <Text style={[styles.infoLabel, { color: inactiveColor }]}>
                 Category:
               </Text>
               <Text style={[styles.infoValue, { color: textColor }]}>
-                Common Phrases
+                {word.id.startsWith("m2f")
+                  ? "Moussey to French"
+                  : "French to Moussey"}
               </Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text style={[styles.infoLabel, { color: inactiveColor }]}>
-                Difficulty:
-              </Text>
-              <View style={styles.difficultyContainer}>
-                <View
-                  style={[
-                    styles.difficultyBar,
-                    { backgroundColor: colors?.border || "#e0e0e0" },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.difficultyFill,
-                      { width: "40%", backgroundColor: primaryColor },
-                    ]}
-                  />
-                </View>
-                <Text style={[styles.difficultyText, { color: primaryColor }]}>
-                  Beginner
-                </Text>
-              </View>
             </View>
           </View>
         </Animated.View>
