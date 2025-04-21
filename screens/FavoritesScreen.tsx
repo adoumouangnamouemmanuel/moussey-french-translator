@@ -70,91 +70,103 @@ export default function FavoritesScreen() {
     setSelectedItems([]);
   };
 
-  const renderWordItem = ({ item }: { item: DictionaryEntry }) => (
-    <TouchableOpacity
-      style={[
-        styles.wordItem,
-        { backgroundColor: colors.card },
-        isSelectionMode &&
-          selectedItems.includes(item.id) && {
-            backgroundColor: `${colors.primary}20`,
-          },
-      ]}
-      onPress={() => {
-        if (isSelectionMode) {
-          toggleSelection(item.id);
-        } else {
-          navigation.navigate("WordDetail", { word: item });
-        }
-      }}
-      onLongPress={() => {
-        if (!isSelectionMode) {
-          setIsSelectionMode(true);
-          toggleSelection(item.id);
-        }
-      }}
-    >
-      {isSelectionMode && (
-        <View
-          style={[
-            styles.selectionIndicator,
-            {
-              borderColor: colors.primary,
-              backgroundColor: selectedItems.includes(item.id)
-                ? colors.primary
-                : "transparent",
+  // Update the renderWordItem function to handle both French and Moussey words
+  const renderWordItem = ({ item }: { item: DictionaryEntry }) => {
+    const isFrenchPrimary = item.id.startsWith("f2m_");
+
+    return (
+      <TouchableOpacity
+        style={[
+          styles.wordItem,
+          { backgroundColor: colors.card },
+          isSelectionMode &&
+            selectedItems.includes(item.id) && {
+              backgroundColor: `${colors.primary}20`,
             },
-          ]}
-        >
-          {selectedItems.includes(item.id) && (
-            <Ionicons name="checkmark" size={16} color="white" />
-          )}
-        </View>
-      )}
-      <View style={styles.wordItemContent}>
-        <View style={styles.wordItemHeader}>
-          <Text style={[styles.wordItemTitle, { color: colors.text }]}>
-            {item.moussey}
-          </Text>
-          <Text style={[styles.wordItemPhonetic, { color: colors.inactive }]}>
-            {item.pronunciation || ""}
-          </Text>
-        </View>
-        <Text style={[styles.wordItemTranslation, { color: colors.inactive }]}>
-          {item.french}
-        </Text>
-        <View style={styles.wordItemFooter}>
-          {item.partsOfSpeech && item.partsOfSpeech.length > 0 && (
-            <View
-              style={[
-                styles.wordItemBadge,
-                { backgroundColor: `${colors.primary}20` },
-              ]}
-            >
+        ]}
+        onPress={() => {
+          if (isSelectionMode) {
+            toggleSelection(item.id);
+          } else {
+            navigation.navigate("WordDetail", { word: item });
+          }
+        }}
+        onLongPress={() => {
+          if (!isSelectionMode) {
+            setIsSelectionMode(true);
+            toggleSelection(item.id);
+          }
+        }}
+      >
+        {isSelectionMode && (
+          <View
+            style={[
+              styles.selectionIndicator,
+              {
+                borderColor: colors.primary,
+                backgroundColor: selectedItems.includes(item.id)
+                  ? colors.primary
+                  : "transparent",
+              },
+            ]}
+          >
+            {selectedItems.includes(item.id) && (
+              <Ionicons name="checkmark" size={16} color="white" />
+            )}
+          </View>
+        )}
+        <View style={styles.wordItemContent}>
+          <View style={styles.wordItemHeader}>
+            <Text style={[styles.wordItemTitle, { color: colors.text }]}>
+              {isFrenchPrimary ? item.french : item.moussey}
+            </Text>
+            {!isFrenchPrimary && item.pronunciation && (
               <Text
-                style={[styles.wordItemBadgeText, { color: colors.primary }]}
+                style={[styles.wordItemPhonetic, { color: colors.inactive }]}
               >
-                {item.partsOfSpeech[0].charAt(0).toUpperCase() +
-                  item.partsOfSpeech[0].slice(1)}
+                {item.pronunciation}
               </Text>
-            </View>
-          )}
+            )}
+          </View>
+          <Text
+            style={[styles.wordItemTranslation, { color: colors.inactive }]}
+          >
+            {isFrenchPrimary ? item.moussey : item.french}
+          </Text>
+          <View style={styles.wordItemFooter}>
+            {item.partsOfSpeech && item.partsOfSpeech.length > 0 && (
+              <View
+                style={[
+                  styles.wordItemBadge,
+                  { backgroundColor: `${colors.primary}20` },
+                ]}
+              >
+                <Text
+                  style={[styles.wordItemBadgeText, { color: colors.primary }]}
+                >
+                  {item.partsOfSpeech[0].charAt(0).toUpperCase() +
+                    item.partsOfSpeech[0].slice(1)}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
-      </View>
-      {!isSelectionMode && (
-        <TouchableOpacity
-          style={styles.favoriteButton}
-          onPress={() => toggleFavorite(item.id)}
-        >
-          <Ionicons name="heart" size={24} color="#FF6B6B" />
-        </TouchableOpacity>
-      )}
-    </TouchableOpacity>
-  );
+        {!isSelectionMode && (
+          <TouchableOpacity
+            style={styles.favoriteButton}
+            onPress={() => toggleFavorite(item.id)}
+          >
+            <Ionicons name="heart" size={24} color="#FF6B6B" />
+          </TouchableOpacity>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   const renderPhraseItem = ({ item }: { item: (typeof favoritePhrases)[0] }) =>
     null;
 
+  // Update the UI text to French
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar backgroundColor={colors.primary} barStyle="light-content" />

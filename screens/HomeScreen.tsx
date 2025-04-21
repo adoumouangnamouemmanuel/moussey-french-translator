@@ -16,17 +16,19 @@ import { useAppContext } from "../context/AppContext";
 import { useTheme } from "../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { getWordOfDay } from "../utils/dictionary";
+import { getHistoryItems } from "../utils/historyUtils";
 
-// Import the recentActivities and featureCategories from your original file
-import { recentActivities, featureCategories } from "../data/home/homeData";
+// Import the featureCategories from your original file
+import { featureCategories } from "../data/home/homeData";
 
 export default function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  const { points } = useAppContext();
+  const { points, isFavorite, toggleFavorite } = useAppContext();
   const { colors } = useTheme();
   const [currentDailyWord, setCurrentDailyWord] = useState(0);
   const [dailyWords, setDailyWords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
 
   useEffect(() => {
     const loadDailyWords = async () => {
@@ -53,7 +55,38 @@ export default function HomeScreen() {
     };
 
     loadDailyWords();
-  }, []);
+    loadRecentActivities();
+
+    // Refresh recent activities when the screen is focused
+    const unsubscribe = navigation.addListener("focus", () => {
+      loadRecentActivities();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  // Load recent activities from history
+  const loadRecentActivities = async () => {
+    try {
+      const historyItems = await getHistoryItems();
+
+      // Convertir les éléments d'historique au format attendu par votre interface
+      const activities = historyItems.slice(0, 2).map((item) => {
+        return {
+          id: item.id,
+          type: item.type === "dictionary" ? "search" : "translate",
+          word: item.word || item.phrase || "",
+          time: item.timestamp,
+        };
+      });
+
+      setRecentActivities(activities);
+    } catch (error) {
+      console.error("Error loading recent activities:", error);
+      // En cas d'erreur, définir un tableau vide
+      setRecentActivities([]);
+    }
+  };
 
   const nextWord = () => {
     setCurrentDailyWord((prev) => (prev + 1) % dailyWords.length);
@@ -63,6 +96,14 @@ export default function HomeScreen() {
     setCurrentDailyWord(
       (prev) => (prev - 1 + dailyWords.length) % dailyWords.length
     );
+  };
+
+  // Handle favorite toggle for word of the day
+  const handleFavoriteToggle = () => {
+    if (dailyWords.length > 0) {
+      const currentWord = dailyWords[currentDailyWord];
+      toggleFavorite(currentWord.id);
+    }
   };
 
   return (
@@ -172,8 +213,20 @@ export default function HomeScreen() {
                 color={colors.primary}
               />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.wordActionButton}>
-              <Ionicons name="star-outline" size={20} color={colors.primary} />
+            <TouchableOpacity
+              style={styles.wordActionButton}
+              onPress={handleFavoriteToggle}
+            >
+              <Ionicons
+                name={
+                  dailyWords.length > 0 &&
+                  isFavorite(dailyWords[currentDailyWord].id)
+                    ? "star"
+                    : "star-outline"
+                }
+                size={20}
+                color={colors.primary}
+              />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.wordActionButton}
@@ -261,92 +314,118 @@ export default function HomeScreen() {
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               Activité Récente
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate("History")}>
               <Text style={[styles.seeAllText, { color: colors.primary }]}>
                 Voir tout
               </Text>
             </TouchableOpacity>
           </View>
 
-          {recentActivities.map((activity) => (
-            <View
-              key={activity.id}
-              style={[styles.activityItem, { backgroundColor: colors.card }]}
-            >
-              <View
-                style={[
-                  styles.activityIconContainer,
-                  { backgroundColor: colors.primary },
-                ]}
-              >
-                <Ionicons
-                  name={
-                    activity.type === "search"
-                      ? "search"
-                      : activity.type === "practice"
-                      ? "trophy"
-                      : "star"
+          {recentActivities.length > 0 ? (
+            recentActivities.map((activity) => (
+              <TouchableOpacity
+                key={activity.id}
+                style={[styles.activityItem, { backgroundColor: colors.card }]}
+                onPress={() => {
+                  if (activity.type === "search" && activity.word) {
+                    navigation.navigate("DictionaryScreen", {
+                      searchQuery: activity.word,
+                    });
+                  } else if (activity.type === "translate" && activity.word) {
+                    navigation.navigate("TranslatorScreen", {
+                      text: activity.word,
+                    });
                   }
-                  size={20}
-                  color="white"
-                  style={styles.activityIcon}
-                />
-              </View>
-              <View style={styles.activityContent}>
-                {activity.type === "search" ? (
-                  <Text style={[styles.activityText, { color: colors.text }]}>
-                    Vous avez recherché "
-                    <Text
-                      style={[
-                        styles.activityHighlight,
-                        { color: colors.primary },
-                      ]}
-                    >
-                      {activity.word}
+                }}
+              >
+                <View
+                  style={[
+                    styles.activityIconContainer,
+                    { backgroundColor: colors.primary },
+                  ]}
+                >
+                  <Ionicons
+                    name={
+                      activity.type === "search"
+                        ? "search"
+                        : activity.type === "practice"
+                        ? "trophy"
+                        : "star"
+                    }
+                    size={20}
+                    color="white"
+                    style={styles.activityIcon}
+                  />
+                </View>
+                <View style={styles.activityContent}>
+                  {activity.type === "search" ? (
+                    <Text style={[styles.activityText, { color: colors.text }]}>
+                      Vous avez recherché "
+                      <Text
+                        style={[
+                          styles.activityHighlight,
+                          { color: colors.primary },
+                        ]}
+                      >
+                        {activity.word}
+                      </Text>
+                      "
                     </Text>
-                    "
-                  </Text>
-                ) : activity.type === "practice" ? (
-                  <Text style={[styles.activityText, { color: colors.text }]}>
-                    Vous avez obtenu{" "}
-                    <Text
-                      style={[
-                        styles.activityHighlight,
-                        { color: colors.primary },
-                      ]}
-                    >
-                      {activity.score}
-                    </Text>{" "}
-                    dans{" "}
-                    <Text
-                      style={[
-                        styles.activityHighlight,
-                        { color: colors.primary },
-                      ]}
-                    >
-                      {activity.lesson}
+                  ) : activity.type === "practice" ? (
+                    <Text style={[styles.activityText, { color: colors.text }]}>
+                      Vous avez obtenu{" "}
+                      <Text
+                        style={[
+                          styles.activityHighlight,
+                          { color: colors.primary },
+                        ]}
+                      >
+                        {activity.score}
+                      </Text>{" "}
+                      dans{" "}
+                      <Text
+                        style={[
+                          styles.activityHighlight,
+                          { color: colors.primary },
+                        ]}
+                      >
+                        {activity.lesson}
+                      </Text>
                     </Text>
-                  </Text>
-                ) : (
-                  <Text style={[styles.activityText, { color: colors.text }]}>
-                    Vous avez ajouté "
-                    <Text
-                      style={[
-                        styles.activityHighlight,
-                        { color: colors.primary },
-                      ]}
-                    >
-                      {activity.word}
+                  ) : (
+                    <Text style={[styles.activityText, { color: colors.text }]}>
+                      Vous avez traduit "
+                      <Text
+                        style={[
+                          styles.activityHighlight,
+                          { color: colors.primary },
+                        ]}
+                      >
+                        {activity.word}
+                      </Text>
+                      "
                     </Text>
-                    " aux favoris
+                  )}
+                  <Text
+                    style={[styles.activityTime, { color: colors.inactive }]}
+                  >
+                    {activity.time}
                   </Text>
-                )}
-                <Text style={[styles.activityTime, { color: colors.inactive }]}>
-                  {activity.time}
-                </Text>
-              </View>
+                </View>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <View
+              style={[
+                styles.activityItem,
+                { backgroundColor: colors.card, justifyContent: "center" },
+              ]}
+            >
+              <Text style={[styles.activityText, { color: colors.inactive }]}>
+                Aucune activité récente
+              </Text>
             </View>
-          ))}
+          )}
         </View>
 
         {/* Features by Category */}

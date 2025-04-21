@@ -51,38 +51,98 @@ export const getAllDictionaryEntries = (): DictionaryEntry[] => {
   return [...mousseyToFrench, ...frenchToMoussey];
 };
 
-// Search dictionary entries
+// Modify the searchDictionary function to better handle French words as unique entries
 export const searchDictionary = (
   query: string,
   language: "moussey" | "french" | "both" = "both",
   partOfSpeech?: string
 ): DictionaryEntry[] => {
   const allEntries = getAllDictionaryEntries();
-  const lowerQuery = query.toLowerCase();
+  const lowerQuery = query.toLowerCase().trim();
+  const results: DictionaryEntry[] = [];
 
-  return allEntries.filter((entry) => {
-    // Filter by part of speech if specified
-    if (partOfSpeech && partOfSpeech !== "all") {
-      if (!entry.partsOfSpeech || !entry.partsOfSpeech.includes(partOfSpeech)) {
-        return false;
+  // First find exact French matches if searching for French or both
+  if (language === "french" || language === "both") {
+    const exactFrenchMatches = allEntries.filter((entry) => {
+      // Check if this is a French entry with exact match
+      if (
+        entry.id.startsWith("f2m_") &&
+        entry.french.toLowerCase() === lowerQuery
+      ) {
+        return partOfSpeech
+          ? entry.partsOfSpeech?.includes(partOfSpeech) || false
+          : true;
       }
-    }
+      return false;
+    });
 
-    // Filter by language and query
-    if (language === "moussey" || language === "both") {
-      if (entry.moussey.toLowerCase().includes(lowerQuery)) {
-        return true;
+    results.push(...exactFrenchMatches);
+  }
+
+  // Then find exact Moussey matches if searching for Moussey or both
+  if (language === "moussey" || language === "both") {
+    const exactMousseyMatches = allEntries.filter((entry) => {
+      // Check if this is a Moussey entry with exact match
+      if (
+        entry.id.startsWith("m2f_") &&
+        entry.moussey.toLowerCase() === lowerQuery
+      ) {
+        return partOfSpeech
+          ? entry.partsOfSpeech?.includes(partOfSpeech) || false
+          : true;
       }
-    }
+      return false;
+    });
 
-    if (language === "french" || language === "both") {
+    results.push(...exactMousseyMatches);
+  }
+
+  // If we have exact matches, return them
+  if (results.length > 0) {
+    return results;
+  }
+
+  // Otherwise, find partial matches
+  // First French partial matches
+  if (language === "french" || language === "both") {
+    const partialFrenchMatches = allEntries.filter((entry) => {
       if (entry.french.toLowerCase().includes(lowerQuery)) {
-        return true;
+        return partOfSpeech
+          ? entry.partsOfSpeech?.includes(partOfSpeech) || false
+          : true;
       }
-    }
+      return false;
+    });
 
-    return false;
-  });
+    // Prioritize French-to-Moussey entries
+    const frenchPrimaryMatches = partialFrenchMatches.filter((entry) =>
+      entry.id.startsWith("f2m_")
+    );
+    const frenchSecondaryMatches = partialFrenchMatches.filter(
+      (entry) => !entry.id.startsWith("f2m_")
+    );
+
+    results.push(...frenchPrimaryMatches, ...frenchSecondaryMatches);
+  }
+
+  // Then Moussey partial matches
+  if (language === "moussey" || language === "both") {
+    const partialMousseyMatches = allEntries.filter((entry) => {
+      if (
+        entry.moussey.toLowerCase().includes(lowerQuery) &&
+        !results.some((e) => e.id === entry.id)
+      ) {
+        return partOfSpeech
+          ? entry.partsOfSpeech?.includes(partOfSpeech) || false
+          : true;
+      }
+      return false;
+    });
+
+    results.push(...partialMousseyMatches);
+  }
+
+  return results;
 };
 
 // Get entry by ID
@@ -294,4 +354,81 @@ export const saveFavorite = async (
   } catch (error) {
     console.error("Failed to save favorite", error);
   }
+};
+
+// Add a function to get related words with the same translation
+export const getRelatedWordsByTranslation = (
+  entry: DictionaryEntry
+): DictionaryEntry[] => {
+  const allEntries = getAllDictionaryEntries();
+
+  // If it's a French entry, find all Moussey words with this French translation
+  if (entry.id.startsWith("f2m_")) {
+    return allEntries.filter(
+      (e) =>
+        e.id !== entry.id &&
+        e.french.toLowerCase() === entry.french.toLowerCase()
+    );
+  }
+
+  // If it's a Moussey entry, find all other Moussey words with the same French translation
+  return allEntries.filter(
+    (e) =>
+      e.id !== entry.id && e.french.toLowerCase() === entry.french.toLowerCase()
+  );
+};
+
+// Add a function to get words with similar meanings
+export const getSimilarWords = (entry: DictionaryEntry): DictionaryEntry[] => {
+  const allEntries = getAllDictionaryEntries();
+  const frenchWords = entry.french
+    .toLowerCase()
+    .split(/[,;]/)
+    .map((word) => word.trim());
+
+  return allEntries
+    .filter((e) => {
+      if (e.id === entry.id) return false;
+
+      const otherFrenchWords = e.french
+        .toLowerCase()
+        .split(/[,;]/)
+        .map((word) => word.trim());
+      return frenchWords.some((word) =>
+        otherFrenchWords.some(
+          (otherWord) => otherWord.includes(word) || word.includes(otherWord)
+        )
+      );
+    })
+    .slice(0, 5); // Limit to 5 similar words
+};
+
+// Add a function to get all Moussey translations for a French word
+export const getMousseyTranslationsForFrench = (
+  frenchWord: string
+): string[] => {
+  const allEntries = getAllDictionaryEntries();
+  const frenchEntry = allEntries.find(
+    (entry) =>
+      entry.id.startsWith("f2m_") &&
+      entry.french.toLowerCase() === frenchWord.toLowerCase()
+  );
+
+  if (!frenchEntry || !frenchEntry.definitions) return [];
+
+  return frenchEntry.definitions.map((def) => def.definition);
+};
+
+// Add a function to get all examples for a word
+export const getExamplesForWord = (
+  entry: DictionaryEntry
+): { example: string; translation: string }[] => {
+  if (!entry.definitions) return [];
+
+  return entry.definitions
+    .filter((def) => def.example && def.exampleTranslation)
+    .map((def) => ({
+      example: def.example || "",
+      translation: def.exampleTranslation || "",
+    }));
 };

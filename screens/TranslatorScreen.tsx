@@ -19,6 +19,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../context/ThemeContext";
 import { translateText } from "../utils/dictionary";
+import { addToHistory } from "../utils/historyUtils";
 
 type Language = "moussey" | "french";
 
@@ -102,6 +103,13 @@ export default function TranslatorScreen() {
       setTranslatedText(result);
       setIsLoading(false);
       setHasTranslated(true);
+
+      // Add to history
+      addToHistory({
+        phrase: inputText,
+        translation: result,
+        type: "translator",
+      });
     }, 1000);
   };
 
@@ -142,7 +150,9 @@ export default function TranslatorScreen() {
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>
-          {fromLanguage === "moussey" ? "Moussey → French" : "French → Moussey"}
+          {fromLanguage === "moussey"
+            ? "Moussey → Français"
+            : "Français → Moussey"}
         </Text>
         <Animated.View style={{ transform: [{ rotate: spin }] }}>
           <TouchableOpacity onPress={switchLanguages}>
@@ -155,7 +165,7 @@ export default function TranslatorScreen() {
       <View style={[styles.inputContainer, { backgroundColor: cardColor }]}>
         <View style={styles.inputHeader}>
           <Text style={[styles.inputLabel, { color: primaryColor }]}>
-            {fromLanguage === "moussey" ? "Moussey" : "French"}
+            {fromLanguage === "moussey" ? "Moussey" : "Français"}
           </Text>
           {inputText.length > 0 && (
             <TouchableOpacity onPress={clearText} style={styles.clearButton}>
@@ -169,9 +179,9 @@ export default function TranslatorScreen() {
             styles.textInput,
             { color: textColor, borderColor: colors?.border || "#e0e0e0" },
           ]}
-          placeholder={`Enter ${
-            fromLanguage === "moussey" ? "Moussey" : "French"
-          } text here...`}
+          placeholder={`Entrez du texte en ${
+            fromLanguage === "moussey" ? "Moussey" : "Français"
+          }...`}
           value={inputText}
           onChangeText={setInputText}
           multiline
@@ -240,7 +250,7 @@ export default function TranslatorScreen() {
                   color="white"
                   style={styles.translateIcon}
                 />
-                <Text style={styles.translateButtonText}>Translate</Text>
+                <Text style={styles.translateButtonText}>Traduire</Text>
               </>
             )}
           </LinearGradient>
@@ -259,7 +269,7 @@ export default function TranslatorScreen() {
           <>
             <View style={styles.translationHeader}>
               <Text style={[styles.translationLabel, { color: primaryColor }]}>
-                {toLanguage === "moussey" ? "Moussey" : "French"}
+                {toLanguage === "moussey" ? "Moussey" : "Français"}
               </Text>
               <TouchableOpacity style={styles.copyButton}>
                 <Ionicons name="copy-outline" size={20} color={primaryColor} />
@@ -276,8 +286,8 @@ export default function TranslatorScreen() {
               style={[styles.emptyTranslationText, { color: inactiveColor }]}
             >
               {inputText.trim()
-                ? "Press Translate to see the translation"
-                : "Enter text and press Translate"}
+                ? "Appuyez sur Traduire pour voir la traduction"
+                : "Entrez du texte et appuyez sur Traduire"}
             </Text>
           </View>
         )}

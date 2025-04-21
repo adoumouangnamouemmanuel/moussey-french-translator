@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -8,56 +8,20 @@ import {
   TouchableOpacity,
   StatusBar,
   FlatList,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useTheme } from "../context/ThemeContext"; // Import useTheme
-
-// Mock history data
-const historyItems = [
-  {
-    id: "1",
-    word: "bonjour",
-    translation: "hello",
-    type: "dictionary",
-    timestamp: "Aujourd'hui, 10:30",
-  },
-  {
-    id: "2",
-    phrase: "Comment allez-vous?",
-    translation: "How are you?",
-    type: "translator",
-    timestamp: "Aujourd'hui, 09:15",
-  },
-  {
-    id: "3",
-    word: "maison",
-    translation: "house",
-    type: "dictionary",
-    timestamp: "Hier, 18:45",
-  },
-  {
-    id: "4",
-    word: "merci",
-    translation: "thank you",
-    type: "dictionary",
-    timestamp: "Hier, 16:20",
-  },
-  {
-    id: "5",
-    phrase: "Je voudrais un café",
-    translation: "I would like a coffee",
-    type: "translator",
-    timestamp: "Il y a 2 jours",
-  },
-  {
-    id: "6",
-    word: "famille",
-    translation: "family",
-    type: "dictionary",
-    timestamp: "Il y a 3 jours",
-  },
-];
+import { useTheme } from "../context/ThemeContext";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useAppContext } from "../context/AppContext";
+import {
+  getHistoryItems,
+  deleteHistoryItems,
+  clearHistory,
+  type HistoryItem,
+} from "../utils/historyUtils";
 
 // Filter options
 const filterOptions = [
@@ -67,10 +31,39 @@ const filterOptions = [
 ];
 
 export default function HistoryScreen() {
-  const { colors } = useTheme(); // Use theme colors
+  const { colors } = useTheme();
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const { isFavorite, toggleFavorite } = useAppContext();
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load history from storage on component mount and focus
+  useEffect(() => {
+    loadHistory();
+
+    // Refresh history when screen is focused
+    const unsubscribe = navigation.addListener("focus", () => {
+      loadHistory();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  // Load history from AsyncStorage
+  const loadHistory = async () => {
+    setIsLoading(true);
+    try {
+      const items = await getHistoryItems();
+      setHistoryItems(items);
+    } catch (error) {
+      console.error("Error loading history:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredHistory =
     selectedFilter === "all"
@@ -94,17 +87,69 @@ export default function HistoryScreen() {
     setSelectedItems(filteredHistory.map((item) => item.id));
   };
 
-  const deleteSelected = () => {
-    // In a real app, this would delete the selected items
-    // For now, we'll just exit selection mode
-    setIsSelectionMode(false);
-    setSelectedItems([]);
+  const deleteSelected = async () => {
+    try {
+      await deleteHistoryItems(selectedItems);
+      setHistoryItems(
+        historyItems.filter((item) => !selectedItems.includes(item.id))
+      );
+      setIsSelectionMode(false);
+      setSelectedItems([]);
+    } catch (error) {
+      console.error("Error deleting history items:", error);
+      Alert.alert(
+        "Erreur",
+        "Impossible de supprimer les éléments sélectionnés"
+      );
+    }
   };
 
-  const clearHistory = () => {
-    // In a real app, this would clear the history
-    // For now, we'll just show a console message
-    console.log("History cleared");
+  const handleClearHistory = async () => {
+    try {
+      Alert.alert(
+        "Effacer l'historique",
+        "Êtes-vous sûr de vouloir effacer tout l'historique ?",
+        [
+          {
+            text: "Annuler",
+            style: "cancel",
+          },
+          {
+            text: "Effacer",
+            style: "destructive",
+            onPress: async () => {
+              await clearHistory();
+              setHistoryItems([]);
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error("Error clearing history:", error);
+      Alert.alert("Erreur", "Impossible d'effacer l'historique");
+    }
+  };
+
+  // Navigate to appropriate screen based on history item type
+  const navigateToItem = (item: HistoryItem) => {
+    if (item.type === "dictionary") {
+      // Navigate to dictionary detail with the word
+      if (item.word) {
+        navigation.navigate("DictionaryScreen", { searchQuery: item.word });
+      }
+    } else if (item.type === "translator") {
+      // Navigate to translator with the phrase
+      if (item.phrase) {
+        navigation.navigate("TranslatorScreen", { text: item.phrase });
+      }
+    }
+  };
+
+  // Toggle favorite status for a history item
+  const handleToggleFavorite = (item: HistoryItem) => {
+    if (item.word) {
+      toggleFavorite(item.word);
+    }
   };
 
   return (
@@ -143,7 +188,7 @@ export default function HistoryScreen() {
             <View style={styles.headerActions}>
               <TouchableOpacity
                 style={styles.headerAction}
-                onPress={clearHistory}
+                onPress={handleClearHistory}
               >
                 <Ionicons name="trash-outline" size={24} color="white" />
               </TouchableOpacity>
@@ -203,7 +248,9 @@ export default function HistoryScreen() {
                   backgroundColor: `${colors.primary}20`,
                 },
             ]}
-            onPress={() => (isSelectionMode ? toggleSelection(item.id) : null)}
+            onPress={() =>
+              isSelectionMode ? toggleSelection(item.id) : navigateToItem(item)
+            }
             onLongPress={() => {
               if (!isSelectionMode) {
                 setIsSelectionMode(true);
@@ -231,7 +278,7 @@ export default function HistoryScreen() {
             <View style={styles.historyItemContent}>
               <View style={styles.historyItemHeader}>
                 <Text style={[styles.historyItemTitle, { color: colors.text }]}>
-                  {"word" in item ? item.word : item.phrase}
+                  {item.word || item.phrase || ""}
                 </Text>
                 <View
                   style={[
@@ -267,11 +314,16 @@ export default function HistoryScreen() {
               </Text>
             </View>
             {!isSelectionMode && (
-              <TouchableOpacity style={styles.favoriteButton}>
+              <TouchableOpacity
+                style={styles.favoriteButton}
+                onPress={() => handleToggleFavorite(item)}
+              >
                 <Ionicons
-                  name="heart-outline"
+                  name={isFavorite(item.word || "") ? "heart" : "heart-outline"}
                   size={24}
-                  color={colors.inactive}
+                  color={
+                    isFavorite(item.word || "") ? colors.primary : colors.inactive
+                  }
                 />
               </TouchableOpacity>
             )}
@@ -343,6 +395,7 @@ const styles = StyleSheet.create({
   },
   historyList: {
     padding: 15,
+    flexGrow: 1,
   },
   historyItem: {
     flexDirection: "row",
@@ -395,6 +448,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 50,
+    flex: 1,
   },
   emptyText: {
     fontSize: 16,

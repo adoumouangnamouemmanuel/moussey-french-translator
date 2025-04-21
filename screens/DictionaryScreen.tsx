@@ -21,28 +21,38 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../context/ThemeContext";
-import { searchDictionary, getAllDictionaryEntries } from "../utils/dictionary";
-import { dictionaryData } from "../data/dictionary/dictionaryData";
+import {
+  searchDictionary,
+  getAllDictionaryEntries,
+  type DictionaryEntry,
+} from "../utils/dictionary";
+import { useFavorites } from "../context/FavoritesContext";
+import { addToHistory } from "../utils/historyUtils";
 
 type WordItemProps = {
-  item: {
-    id: string;
-    moussey: string;
-    french: string;
-    pronunciation: string;
-  };
+  item: DictionaryEntry;
   onPress: () => void;
   onPronounce: () => void;
+  onToggleFavorite: () => void;
+  isFavorite: boolean;
   highlightText?: string;
-  themeColors?: any; // Add theme colors prop
+  themeColors?: any;
 };
 
+// Constants
+const RECENT_SEARCHES_KEY = "recent_dictionary_searches";
+const MAX_RECENT_SEARCHES = 15;
+const MAX_SUGGESTIONS = 8;
+
+// WordItem component with improved handling of French words
 const WordItem = ({
   item,
   onPress,
   onPronounce,
+  onToggleFavorite,
+  isFavorite,
   highlightText,
-  themeColors, // Receive theme colors
+  themeColors,
 }: WordItemProps) => {
   // Animation for press feedback
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -87,6 +97,9 @@ const WordItem = ({
     );
   };
 
+  // Determine if this is a French primary match
+  const isFrenchPrimary = item.id.startsWith("f2m_");
+
   // Use theme colors or fallback to original colors
   const cardColor = themeColors?.card || "white";
   const textColor = themeColors?.text || "#333";
@@ -110,21 +123,49 @@ const WordItem = ({
         ]}
       >
         <View style={styles.wordContent}>
-          <Text style={[styles.moussey, { color: textColor }]}>
-            {highlightText
-              ? highlightMatch(item.moussey, highlightText)
-              : item.moussey}
-          </Text>
-          <Text style={[styles.french, { color: inactiveColor }]}>
-            {highlightText
-              ? highlightMatch(item.french, highlightText)
-              : item.french}
-          </Text>
-          <Text style={[styles.pronunciation, { color: inactiveColor }]}>
-            {item.pronunciation}
-          </Text>
+          {/* If it's a French primary match, show French first */}
+          {isFrenchPrimary ? (
+            <>
+              <Text style={[styles.moussey, { color: textColor }]}>
+                {highlightText
+                  ? highlightMatch(item.french, highlightText)
+                  : item.french}
+              </Text>
+              <Text style={[styles.french, { color: inactiveColor }]}>
+                {item.moussey}
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={[styles.moussey, { color: textColor }]}>
+                {highlightText
+                  ? highlightMatch(item.moussey, highlightText)
+                  : item.moussey}
+              </Text>
+              <Text style={[styles.french, { color: inactiveColor }]}>
+                {highlightText
+                  ? highlightMatch(item.french, highlightText)
+                  : item.french}
+              </Text>
+            </>
+          )}
+          {item.pronunciation && !isFrenchPrimary && (
+            <Text style={[styles.pronunciation, { color: inactiveColor }]}>
+              {item.pronunciation}
+            </Text>
+          )}
         </View>
         <View style={styles.wordActions}>
+          <TouchableOpacity
+            style={styles.favoriteButton}
+            onPress={onToggleFavorite}
+          >
+            <Ionicons
+              name={isFavorite ? "star" : "star-outline"}
+              size={20}
+              color={isFavorite ? "#FFD700" : primaryColor}
+            />
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.pronounceButton}
             onPress={onPronounce}
@@ -145,24 +186,27 @@ const WordItem = ({
   );
 };
 
-// Replace the wordSuggestions mock data with common words from the dictionary
-const getWordSuggestions = (): string[] => {
-  const allEntries = getAllDictionaryEntries().slice(0, 50);
-  return allEntries.map((entry) => entry.moussey).slice(0, 8);
-};
-
 export default function DictionaryScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  const { colors } = useTheme(); // Get theme colors
+  const { colors } = useTheme();
+  const { favorites, isFavorite, toggleFavorite } = useFavorites();
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState("search"); // search, favorites, add, mic, audio, more
+  const [recentSearches, setRecentSearches] = useState<
+    { term: string; timestamp: number; language: string }[]
+  >([]);
+  const [activeTab, setActiveTab] = useState("search");
   const [showMicModal, setShowMicModal] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [showAddWordModal, setShowAddWordModal] = useState(false);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const [newWord, setNewWord] = useState({
+    moussey: "",
+    french: "",
+    pronunciation: "",
+  });
+  const [dynamicSuggestions, setDynamicSuggestions] = useState<string[]>([]);
   const searchInputRef = useRef<TextInput>(null);
 
   // Animation for mic pulse
@@ -173,17 +217,77 @@ export default function DictionaryScreen() {
   useEffect(() => {
     const loadRecentSearches = async () => {
       try {
-        const savedSearches = await AsyncStorage.getItem("recentSearches");
+        const savedSearches = await AsyncStorage.getItem(RECENT_SEARCHES_KEY);
         if (savedSearches) {
           setRecentSearches(JSON.parse(savedSearches));
+          // Generate dynamic suggestions based on recent searches
+          generateDynamicSuggestions(JSON.parse(savedSearches));
+        } else {
+          // If no recent searches, use default suggestions
+          generateDefaultSuggestions();
         }
       } catch (error) {
-        console.error("Failed to load recent searches", error);
+        console.error("Échec du chargement des recherches récentes", error);
+        generateDefaultSuggestions();
       }
     };
 
     loadRecentSearches();
   }, []);
+
+  // Generate dynamic suggestions based on recent searches and dictionary data
+  const generateDynamicSuggestions = (
+    searches: { term: string; timestamp: number; language: string }[]
+  ) => {
+    // Get the most recent searches
+    const recentTerms = searches.slice(0, 5).map((s) => s.term);
+
+    // Get some common words from the dictionary
+    const allEntries = getAllDictionaryEntries();
+
+    // Prioritize French words for better visibility
+    const frenchEntries = allEntries
+      .filter((entry) => entry.id.startsWith("f2m_"))
+      .slice(0, 10);
+    const mousseyEntries = allEntries
+      .filter((entry) => !entry.id.startsWith("f2m_"))
+      .slice(0, 10);
+
+    // Mix French and Moussey words
+    const commonWords = [
+      ...frenchEntries.map((entry) => entry.french),
+      ...mousseyEntries.map((entry) => entry.moussey),
+    ];
+
+    // Combine recent searches with common words, remove duplicates
+    const suggestions = Array.from(
+      new Set([...recentTerms, ...commonWords])
+    ).slice(0, MAX_SUGGESTIONS);
+
+    setDynamicSuggestions(suggestions);
+  };
+
+  // Generate default suggestions if no recent searches
+  const generateDefaultSuggestions = () => {
+    const allEntries = getAllDictionaryEntries();
+
+    // Get a mix of French and Moussey words
+    const frenchWords = allEntries
+      .filter((entry) => entry.id.startsWith("f2m_"))
+      .slice(0, MAX_SUGGESTIONS / 2)
+      .map((entry) => entry.french);
+
+    const mousseyWords = allEntries
+      .filter((entry) => !entry.id.startsWith("f2m_"))
+      .slice(0, MAX_SUGGESTIONS / 2)
+      .map((entry) => entry.moussey);
+
+    // Combine and shuffle
+    const combined = [...frenchWords, ...mousseyWords];
+    const shuffled = combined.sort(() => 0.5 - Math.random());
+
+    setDynamicSuggestions(shuffled.slice(0, MAX_SUGGESTIONS));
+  };
 
   // Start mic pulse animation
   useEffect(() => {
@@ -217,23 +321,52 @@ export default function DictionaryScreen() {
     };
   }, [isRecording]);
 
+  // Determine if a search term is likely French or Moussey
+  const detectLanguage = (term: string): string => {
+    // Simple heuristic: check if the term appears in French dictionary entries
+    const allEntries = getAllDictionaryEntries();
+    const frenchMatches = allEntries.filter(
+      (entry) =>
+        entry.id.startsWith("f2m_") &&
+        entry.french.toLowerCase().includes(term.toLowerCase())
+    );
+
+    return frenchMatches.length > 0 ? "french" : "moussey";
+  };
+
   // Save a search term to recent searches
   const saveToRecentSearches = async (term: string) => {
     if (!term.trim()) return;
 
     try {
-      // Add to front of array and remove duplicates
-      const updatedSearches = [
+      // Detect language
+      const language = detectLanguage(term);
+
+      // Create new search entry
+      const newSearch = {
         term,
-        ...recentSearches.filter((s) => s !== term),
-      ].slice(0, 10);
+        timestamp: Date.now(),
+        language,
+      };
+
+      // Add to front of array, remove duplicates, and limit size
+      const updatedSearches = [
+        newSearch,
+        ...recentSearches.filter(
+          (s) => s.term.toLowerCase() !== term.toLowerCase()
+        ),
+      ].slice(0, MAX_RECENT_SEARCHES);
+
       setRecentSearches(updatedSearches);
       await AsyncStorage.setItem(
-        "recentSearches",
+        RECENT_SEARCHES_KEY,
         JSON.stringify(updatedSearches)
       );
+
+      // Update dynamic suggestions
+      generateDynamicSuggestions(updatedSearches);
     } catch (error) {
-      console.error("Failed to save recent search", error);
+      console.error("Échec de l'enregistrement de la recherche récente", error);
     }
   };
 
@@ -241,9 +374,10 @@ export default function DictionaryScreen() {
   const clearRecentSearches = async () => {
     try {
       setRecentSearches([]);
-      await AsyncStorage.removeItem("recentSearches");
+      await AsyncStorage.removeItem(RECENT_SEARCHES_KEY);
+      generateDefaultSuggestions();
     } catch (error) {
-      console.error("Failed to clear recent searches", error);
+      console.error("Échec de l'effacement des recherches récentes", error);
     }
   };
 
@@ -251,14 +385,11 @@ export default function DictionaryScreen() {
   const filteredWords =
     searchQuery.trim() === "" ? [] : searchDictionary(searchQuery, "both");
 
-  // Get word suggestions
-  const wordSuggestions = getWordSuggestions();
-
   // Filter suggestions based on search query
   const filteredSuggestions =
     searchQuery.trim() === ""
-      ? wordSuggestions
-      : wordSuggestions.filter((suggestion) =>
+      ? dynamicSuggestions
+      : dynamicSuggestions.filter((suggestion) =>
           suggestion.toLowerCase().includes(searchQuery.toLowerCase())
         );
 
@@ -279,18 +410,34 @@ export default function DictionaryScreen() {
   };
 
   // Handle word selection
-  const handleSelectWord = (word: any) => {
-    saveToRecentSearches(word.moussey);
+  const handleSelectWord = (word: DictionaryEntry) => {
+    // Save the appropriate term based on word type
+    const searchTerm = word.id.startsWith("f2m_") ? word.french : word.moussey;
+    saveToRecentSearches(searchTerm);
+
+    // Add to history
+    const translation = word.id.startsWith("f2m_") ? word.moussey : word.french;
+    addToHistory({
+      word: searchTerm,
+      translation: translation,
+      type: "dictionary",
+    });
+
     navigation.navigate("WordDetail", { word });
   };
 
-  // Simulate word pronunciation
+  // Handle word pronunciation
   const handlePronounceWord = () => {
     // In a real app, this would play audio
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
     }, 1000);
+  };
+
+  // Handle toggle favorite
+  const handleToggleFavorite = async (id: string) => {
+    await toggleFavorite(id);
   };
 
   // Clear search
@@ -311,7 +458,7 @@ export default function DictionaryScreen() {
     if (isRecording) {
       // Simulate speech recognition result
       setTimeout(() => {
-        setSearchQuery("hello");
+        setSearchQuery("bonjour");
         setShowMicModal(false);
         setIsRecording(false);
       }, 1500);
@@ -326,6 +473,19 @@ export default function DictionaryScreen() {
   // Handle more options button press
   const handleMoreOptionsPress = () => {
     setShowMoreOptions(true);
+  };
+
+  // Handle add new word
+  const handleAddNewWord = async () => {
+    if (!newWord.moussey.trim() || !newWord.french.trim()) {
+      // Show error
+      return;
+    }
+
+    // In a real app, this would add the word to the database
+    // For now, we'll just close the modal
+    setShowAddWordModal(false);
+    setNewWord({ moussey: "", french: "", pronunciation: "" });
   };
 
   // Use theme colors or fallback to original colors
@@ -364,13 +524,13 @@ export default function DictionaryScreen() {
                       ]}
                     >
                       <Text style={[styles.sectionTitle, { color: textColor }]}>
-                        Recent Searches
+                        Recherches Récentes
                       </Text>
                       <TouchableOpacity onPress={clearRecentSearches}>
                         <Text
                           style={[styles.clearText, { color: primaryColor }]}
                         >
-                          Clear
+                          Effacer
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -383,7 +543,7 @@ export default function DictionaryScreen() {
                             styles.suggestionItem,
                             { borderTopColor: borderColor },
                           ]}
-                          onPress={() => handleSelectRecentSearch(item)}
+                          onPress={() => handleSelectRecentSearch(item.term)}
                         >
                           <Ionicons
                             name="time-outline"
@@ -391,14 +551,26 @@ export default function DictionaryScreen() {
                             color={inactiveColor}
                             style={styles.suggestionIcon}
                           />
-                          <Text
-                            style={[
-                              styles.suggestionText,
-                              { color: textColor },
-                            ]}
-                          >
-                            {item}
-                          </Text>
+                          <View style={styles.suggestionContent}>
+                            <Text
+                              style={[
+                                styles.suggestionText,
+                                { color: textColor },
+                              ]}
+                            >
+                              {item.term}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.suggestionLanguage,
+                                { color: inactiveColor },
+                              ]}
+                            >
+                              {item.language === "french"
+                                ? "Français"
+                                : "Moussey"}
+                            </Text>
+                          </View>
                         </TouchableOpacity>
                       )}
                       scrollEnabled={false}
@@ -496,7 +668,7 @@ export default function DictionaryScreen() {
                       style={[styles.resultsCount, { color: inactiveColor }]}
                     >
                       {filteredWords.length}{" "}
-                      {filteredWords.length === 1 ? "result" : "results"}
+                      {filteredWords.length === 1 ? "résultat" : "résultats"}
                     </Text>
                     <TouchableOpacity onPress={handleClearSearch}>
                       <Text
@@ -505,7 +677,7 @@ export default function DictionaryScreen() {
                           { color: primaryColor },
                         ]}
                       >
-                        Clear search
+                        Effacer la recherche
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -515,9 +687,11 @@ export default function DictionaryScreen() {
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => (
                     <WordItem
-                      item={{ ...item, pronunciation: item.pronunciation || "" }}
+                      item={item}
                       onPress={() => handleSelectWord(item)}
                       onPronounce={handlePronounceWord}
+                      onToggleFavorite={() => handleToggleFavorite(item.id)}
+                      isFavorite={isFavorite(item.id)}
                       highlightText={searchQuery}
                       themeColors={colors}
                     />
@@ -533,7 +707,7 @@ export default function DictionaryScreen() {
                         <Text
                           style={[styles.emptyText, { color: inactiveColor }]}
                         >
-                          No words found
+                          Aucun mot trouvé
                         </Text>
                         <Text
                           style={[
@@ -541,7 +715,8 @@ export default function DictionaryScreen() {
                             { color: inactiveColor },
                           ]}
                         >
-                          Try a different search term or browse suggestions
+                          Essayez un terme de recherche différent ou parcourez
+                          les suggestions
                         </Text>
                         <TouchableOpacity
                           style={styles.browseButton}
@@ -552,7 +727,7 @@ export default function DictionaryScreen() {
                             style={styles.browseButtonGradient}
                           >
                             <Text style={styles.browseButtonText}>
-                              Browse Suggestions
+                              Parcourir les suggestions
                             </Text>
                           </LinearGradient>
                         </TouchableOpacity>
@@ -565,7 +740,7 @@ export default function DictionaryScreen() {
                           color={inactiveColor}
                         />
                         <Text style={[styles.emptyText, { color: textColor }]}>
-                          Dictionary
+                          Dictionnaire
                         </Text>
                         <Text
                           style={[
@@ -573,7 +748,7 @@ export default function DictionaryScreen() {
                             { color: inactiveColor },
                           ]}
                         >
-                          Search for words in Moussey or French
+                          Recherchez des mots en Moussey ou en Français
                         </Text>
                       </View>
                     )
@@ -588,16 +763,17 @@ export default function DictionaryScreen() {
           <View style={styles.tabContentContainer}>
             <View style={[styles.tabHeader, { backgroundColor: cardColor }]}>
               <Text style={[styles.tabTitle, { color: textColor }]}>
-                Favorites
+                Favoris
               </Text>
             </View>
             <View style={styles.emptyContainer}>
               <Ionicons name="star" size={50} color={inactiveColor} />
               <Text style={[styles.emptyText, { color: textColor }]}>
-                No Favorites Yet
+                Pas encore de favoris
               </Text>
               <Text style={[styles.emptySubtext, { color: inactiveColor }]}>
-                Tap the star icon on any word to add it to your favorites
+                Appuyez sur l'icône en forme d'étoile sur n'importe quel mot
+                pour l'ajouter à vos favoris
               </Text>
             </View>
           </View>
@@ -607,53 +783,66 @@ export default function DictionaryScreen() {
           <View style={styles.tabContentContainer}>
             <View style={[styles.tabHeader, { backgroundColor: cardColor }]}>
               <Text style={[styles.tabTitle, { color: textColor }]}>
-                Add New Word
+                Ajouter un nouveau mot
               </Text>
             </View>
             <View style={[styles.addWordForm, { backgroundColor: cardColor }]}>
               <View style={styles.formGroup}>
                 <Text style={[styles.formLabel, { color: textColor }]}>
-                  Moussey Word
+                  Mot Moussey
                 </Text>
                 <TextInput
                   style={[
                     styles.formInput,
                     { backgroundColor: backgroundColor, color: textColor },
                   ]}
-                  placeholder="Enter word in Moussey"
+                  placeholder="Entrez le mot en Moussey"
                   placeholderTextColor={inactiveColor}
+                  value={newWord.moussey}
+                  onChangeText={(text) =>
+                    setNewWord({ ...newWord, moussey: text })
+                  }
                 />
               </View>
               <View style={styles.formGroup}>
                 <Text style={[styles.formLabel, { color: textColor }]}>
-                  French Translation
+                  Traduction Française
                 </Text>
                 <TextInput
                   style={[
                     styles.formInput,
                     { backgroundColor: backgroundColor, color: textColor },
                   ]}
-                  placeholder="Enter French translation"
+                  placeholder="Entrez la traduction française"
                   placeholderTextColor={inactiveColor}
+                  value={newWord.french}
+                  onChangeText={(text) =>
+                    setNewWord({ ...newWord, french: text })
+                  }
                 />
               </View>
               <View style={styles.formGroup}>
                 <Text style={[styles.formLabel, { color: textColor }]}>
-                  Pronunciation
+                  Prononciation
                 </Text>
                 <TextInput
                   style={[
                     styles.formInput,
                     { backgroundColor: backgroundColor, color: textColor },
                   ]}
-                  placeholder="Enter pronunciation"
+                  placeholder="Entrez la prononciation"
                   placeholderTextColor={inactiveColor}
+                  value={newWord.pronunciation}
+                  onChangeText={(text) =>
+                    setNewWord({ ...newWord, pronunciation: text })
+                  }
                 />
               </View>
               <TouchableOpacity
                 style={[styles.submitButton, { backgroundColor: primaryColor }]}
+                onPress={handleAddNewWord}
               >
-                <Text style={styles.submitButtonText}>Add Word</Text>
+                <Text style={styles.submitButtonText}>Ajouter le mot</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -663,12 +852,12 @@ export default function DictionaryScreen() {
           <View style={styles.tabContentContainer}>
             <View style={[styles.tabHeader, { backgroundColor: cardColor }]}>
               <Text style={[styles.tabTitle, { color: textColor }]}>
-                Voice Search
+                Recherche vocale
               </Text>
             </View>
             <View style={styles.micContainer}>
               <Text style={[styles.micInstructions, { color: textColor }]}>
-                Tap the microphone and speak a word to search
+                Appuyez sur le microphone et prononcez un mot à rechercher
               </Text>
               <TouchableOpacity
                 style={[styles.micButton, { backgroundColor: primaryColor }]}
@@ -677,7 +866,7 @@ export default function DictionaryScreen() {
                 <Ionicons name="mic" size={40} color="white" />
               </TouchableOpacity>
               <Text style={[styles.micStatus, { color: inactiveColor }]}>
-                {isRecording ? "Listening..." : "Tap to start"}
+                {isRecording ? "Écoute en cours..." : "Appuyez pour commencer"}
               </Text>
             </View>
           </View>
@@ -687,15 +876,15 @@ export default function DictionaryScreen() {
           <View style={styles.tabContentContainer}>
             <View style={[styles.tabHeader, { backgroundColor: cardColor }]}>
               <Text style={[styles.tabTitle, { color: textColor }]}>
-                Audio Dictionary
+                Dictionnaire Audio
               </Text>
             </View>
             <View style={styles.audioListContainer}>
               <Text style={[styles.audioSectionTitle, { color: textColor }]}>
-                Recently Played
+                Récemment écoutés
               </Text>
               <FlatList
-                data={dictionaryData.slice(0, 5)}
+                data={getAllDictionaryEntries().slice(0, 5)}
                 keyExtractor={(item) => `audio-${item.id}`}
                 renderItem={({ item }) => (
                   <TouchableOpacity
@@ -705,7 +894,9 @@ export default function DictionaryScreen() {
                       <Text
                         style={[styles.audioItemTitle, { color: textColor }]}
                       >
-                        {item.moussey}
+                        {item.id.startsWith("f2m_")
+                          ? item.french
+                          : item.moussey}
                       </Text>
                       <Text
                         style={[
@@ -713,7 +904,9 @@ export default function DictionaryScreen() {
                           { color: inactiveColor },
                         ]}
                       >
-                        {item.french}
+                        {item.id.startsWith("f2m_")
+                          ? item.moussey
+                          : item.french}
                       </Text>
                     </View>
                     <TouchableOpacity
@@ -735,7 +928,7 @@ export default function DictionaryScreen() {
           <View style={styles.tabContentContainer}>
             <View style={[styles.tabHeader, { backgroundColor: cardColor }]}>
               <Text style={[styles.tabTitle, { color: textColor }]}>
-                More Options
+                Plus d'options
               </Text>
             </View>
             <View style={styles.moreOptionsContainer}>
@@ -750,7 +943,7 @@ export default function DictionaryScreen() {
                 />
                 <View style={styles.moreOptionContent}>
                   <Text style={[styles.moreOptionTitle, { color: textColor }]}>
-                    Download Dictionary
+                    Télécharger le dictionnaire
                   </Text>
                   <Text
                     style={[
@@ -758,7 +951,7 @@ export default function DictionaryScreen() {
                       { color: inactiveColor },
                     ]}
                   >
-                    Use the dictionary offline
+                    Utiliser le dictionnaire hors ligne
                   </Text>
                 </View>
                 <Ionicons
@@ -779,7 +972,7 @@ export default function DictionaryScreen() {
                 />
                 <View style={styles.moreOptionContent}>
                   <Text style={[styles.moreOptionTitle, { color: textColor }]}>
-                    Settings
+                    Paramètres
                   </Text>
                   <Text
                     style={[
@@ -787,7 +980,7 @@ export default function DictionaryScreen() {
                       { color: inactiveColor },
                     ]}
                   >
-                    Customize your dictionary
+                    Personnaliser votre dictionnaire
                   </Text>
                 </View>
                 <Ionicons
@@ -808,7 +1001,7 @@ export default function DictionaryScreen() {
                 />
                 <View style={styles.moreOptionContent}>
                   <Text style={[styles.moreOptionTitle, { color: textColor }]}>
-                    Help & Feedback
+                    Aide & Commentaires
                   </Text>
                   <Text
                     style={[
@@ -816,7 +1009,7 @@ export default function DictionaryScreen() {
                       { color: inactiveColor },
                     ]}
                   >
-                    Get support or send feedback
+                    Obtenir de l'aide ou envoyer des commentaires
                   </Text>
                 </View>
                 <Ionicons
@@ -837,7 +1030,7 @@ export default function DictionaryScreen() {
                 />
                 <View style={styles.moreOptionContent}>
                   <Text style={[styles.moreOptionTitle, { color: textColor }]}>
-                    About
+                    À propos
                   </Text>
                   <Text
                     style={[
@@ -845,7 +1038,7 @@ export default function DictionaryScreen() {
                       { color: inactiveColor },
                     ]}
                   >
-                    App version and information
+                    Version et informations sur l'application
                   </Text>
                 </View>
                 <Ionicons
@@ -881,7 +1074,7 @@ export default function DictionaryScreen() {
             <TextInput
               ref={searchInputRef}
               style={[styles.searchInput, { color: textColor }]}
-              placeholder="search..."
+              placeholder="rechercher..."
               placeholderTextColor={inactiveColor}
               value={searchQuery}
               onChangeText={(text) => {
@@ -909,7 +1102,12 @@ export default function DictionaryScreen() {
               </TouchableOpacity>
             )}
           </View>
-          <View style={styles.rightMargin} />
+          <TouchableOpacity
+            onPress={handleMicPress}
+            style={styles.micSearchButton}
+          >
+            <Ionicons name="mic-outline" size={24} color="white" />
+          </TouchableOpacity>
         </LinearGradient>
 
         {/* Content area */}
@@ -952,7 +1150,7 @@ export default function DictionaryScreen() {
                 },
               ]}
             >
-              Favorites
+              Favoris
             </Text>
           </TouchableOpacity>
 
@@ -981,7 +1179,7 @@ export default function DictionaryScreen() {
                 { color: activeTab === "add" ? primaryColor : inactiveColor },
               ]}
             >
-              Add
+              Ajouter
             </Text>
           </TouchableOpacity>
 
@@ -1010,7 +1208,7 @@ export default function DictionaryScreen() {
                 { color: activeTab === "mic" ? primaryColor : inactiveColor },
               ]}
             >
-              Voice
+              Vocal
             </Text>
           </TouchableOpacity>
 
@@ -1074,7 +1272,7 @@ export default function DictionaryScreen() {
                 },
               ]}
             >
-              Search
+              Recherche
             </Text>
           </TouchableOpacity>
 
@@ -1103,7 +1301,7 @@ export default function DictionaryScreen() {
                 { color: activeTab === "more" ? primaryColor : inactiveColor },
               ]}
             >
-              More
+              Plus
             </Text>
           </TouchableOpacity>
         </View>
@@ -1113,10 +1311,10 @@ export default function DictionaryScreen() {
           <View style={styles.modalOverlay}>
             <View style={[styles.modalContent, { backgroundColor: cardColor }]}>
               <Text style={[styles.modalTitle, { color: textColor }]}>
-                Voice Search
+                Recherche Vocale
               </Text>
               <Text style={[styles.modalSubtitle, { color: inactiveColor }]}>
-                Speak clearly to search for a word
+                Parlez clairement pour rechercher un mot
               </Text>
 
               <Animated.View
@@ -1146,7 +1344,9 @@ export default function DictionaryScreen() {
                   { color: isRecording ? primaryColor : inactiveColor },
                 ]}
               >
-                {isRecording ? "Listening..." : "Tap microphone to start"}
+                {isRecording
+                  ? "Écoute en cours..."
+                  : "Appuyez sur le microphone pour commencer"}
               </Text>
 
               <TouchableOpacity
@@ -1154,7 +1354,7 @@ export default function DictionaryScreen() {
                 onPress={() => setShowMicModal(false)}
               >
                 <Text style={[styles.modalCloseText, { color: primaryColor }]}>
-                  Cancel
+                  Annuler
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1166,48 +1366,60 @@ export default function DictionaryScreen() {
           <View style={styles.modalOverlay}>
             <View style={[styles.modalContent, { backgroundColor: cardColor }]}>
               <Text style={[styles.modalTitle, { color: textColor }]}>
-                Add New Word
+                Ajouter un nouveau mot
               </Text>
 
               <View style={styles.formGroup}>
                 <Text style={[styles.formLabel, { color: textColor }]}>
-                  Moussey Word
+                  Mot Moussey
                 </Text>
                 <TextInput
                   style={[
                     styles.formInput,
                     { backgroundColor: backgroundColor, color: textColor },
                   ]}
-                  placeholder="Enter word in Moussey"
+                  placeholder="Entrez le mot en Moussey"
                   placeholderTextColor={inactiveColor}
+                  value={newWord.moussey}
+                  onChangeText={(text) =>
+                    setNewWord({ ...newWord, moussey: text })
+                  }
                 />
               </View>
 
               <View style={styles.formGroup}>
                 <Text style={[styles.formLabel, { color: textColor }]}>
-                  French Translation
+                  Traduction Française
                 </Text>
                 <TextInput
                   style={[
                     styles.formInput,
                     { backgroundColor: backgroundColor, color: textColor },
                   ]}
-                  placeholder="Enter French translation"
+                  placeholder="Entrez la traduction française"
                   placeholderTextColor={inactiveColor}
+                  value={newWord.french}
+                  onChangeText={(text) =>
+                    setNewWord({ ...newWord, french: text })
+                  }
                 />
               </View>
 
               <View style={styles.formGroup}>
                 <Text style={[styles.formLabel, { color: textColor }]}>
-                  Pronunciation
+                  Prononciation
                 </Text>
                 <TextInput
                   style={[
                     styles.formInput,
                     { backgroundColor: backgroundColor, color: textColor },
                   ]}
-                  placeholder="Enter pronunciation"
+                  placeholder="Entrez la prononciation"
                   placeholderTextColor={inactiveColor}
+                  value={newWord.pronunciation}
+                  onChangeText={(text) =>
+                    setNewWord({ ...newWord, pronunciation: text })
+                  }
                 />
               </View>
 
@@ -1219,7 +1431,7 @@ export default function DictionaryScreen() {
                   <Text
                     style={[styles.modalButtonText, { color: inactiveColor }]}
                   >
-                    Cancel
+                    Annuler
                   </Text>
                 </TouchableOpacity>
 
@@ -1228,12 +1440,9 @@ export default function DictionaryScreen() {
                     styles.modalButton,
                     { backgroundColor: primaryColor },
                   ]}
-                  onPress={() => {
-                    // Add word logic would go here
-                    setShowAddWordModal(false);
-                  }}
+                  onPress={handleAddNewWord}
                 >
-                  <Text style={styles.modalButtonTextPrimary}>Save</Text>
+                  <Text style={styles.modalButtonTextPrimary}>Enregistrer</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1255,7 +1464,7 @@ export default function DictionaryScreen() {
                     style={styles.optionIcon}
                   />
                   <Text style={[styles.optionText, { color: textColor }]}>
-                    Settings
+                    Paramètres
                   </Text>
                 </TouchableOpacity>
 
@@ -1267,7 +1476,7 @@ export default function DictionaryScreen() {
                     style={styles.optionIcon}
                   />
                   <Text style={[styles.optionText, { color: textColor }]}>
-                    Download Dictionary
+                    Télécharger le dictionnaire
                   </Text>
                 </TouchableOpacity>
 
@@ -1279,7 +1488,7 @@ export default function DictionaryScreen() {
                     style={styles.optionIcon}
                   />
                   <Text style={[styles.optionText, { color: textColor }]}>
-                    Help
+                    Aide
                   </Text>
                 </TouchableOpacity>
 
@@ -1291,7 +1500,7 @@ export default function DictionaryScreen() {
                     style={styles.optionIcon}
                   />
                   <Text style={[styles.optionText, { color: textColor }]}>
-                    About
+                    À propos
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -1307,7 +1516,7 @@ export default function DictionaryScreen() {
             >
               <ActivityIndicator size="large" color={primaryColor} />
               <Text style={[styles.loadingText, { color: textColor }]}>
-                Playing pronunciation...
+                Lecture de la prononciation...
               </Text>
             </View>
           </View>
@@ -1355,8 +1564,9 @@ const styles = StyleSheet.create({
   clearButton: {
     padding: 8,
   },
-  rightMargin: {
-    width: 10, // Add margin to the right of search bar
+  micSearchButton: {
+    padding: 10,
+    marginLeft: 5,
   },
   content: {
     flex: 1,
@@ -1392,9 +1602,17 @@ const styles = StyleSheet.create({
   suggestionIcon: {
     marginRight: 10,
   },
+  suggestionContent: {
+    flex: 1,
+  },
   suggestionText: {
     fontSize: 16,
     color: "#333",
+  },
+  suggestionLanguage: {
+    fontSize: 12,
+    color: "#777",
+    marginTop: 2,
   },
   resultsHeader: {
     flexDirection: "row",
@@ -1795,5 +2013,8 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 16,
+  },
+  favoriteButton: {
+    marginRight: 10,
   },
 });
