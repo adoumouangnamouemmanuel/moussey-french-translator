@@ -3230,288 +3230,7 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
       },
     ],
   },
-  {
-    word: "ɗlaana",
-    partsOfSpeech: ["noun"],
-    definitions: [
-      {
-        definition: "le côté intérieur de la cuisse",
-      },
-    ],
-  },
-  {
-    word: "ɗlaɓpa",
-    partsOfSpeech: ["verb", "noun"],
-    definitions: [
-      {
-        definition: "joindre, unir",
-      },
-      {
-        definition: "l’union",
-        example: "ɗlaɓ wayra",
-        exampleTranslation: "faire l’enclos avec des épines",
-      },
-      {
-        definition: "faire une barrière en terre pour pêcher",
-        example: "ɗlaɓ damma",
-        exampleTranslation: "faire une barrière en terre pour pêcher",
-      },
-    ],
-    relatedWords: ["ɗlaɓ wayra", "ɗlaɓ damma"],
-  },
-  {
-    word: "ɗladlakŋa",
-    partsOfSpeech: ["noun"],
-    definitions: [
-      {
-        definition: "la sauterelle",
-      },
-    ],
-  },
-  {
-    word: "ɗlaɗta",
-    partsOfSpeech: ["noun"],
-    definitions: [
-      {
-        definition: "la natte",
-      },
-    ],
-  },
-  {
-    word: "ɗlakka",
-    partsOfSpeech: ["verb"],
-    definitions: [
-      {
-        definition: "attraper au vol, happer au vol",
-      },
-    ],
-  },
-  {
-    word: "ɗlakka",
-    partsOfSpeech: ["verb", "noun"],
-    definitions: [
-      {
-        definition: "trembler, trépider, frissonner",
-      },
-      {
-        definition: "le tremblement, le frisson, le grélotement",
-      },
-    ],
-  },
-  {
-    word: "ɗlamba",
-    partsOfSpeech: ["noun"],
-    definitions: [
-      {
-        definition: "le tabouret, la selle, le trone",
-      },
-    ],
-  },
-  {
-    word: "ɗlaŋaɗta",
-    partsOfSpeech: ["verb"],
-    definitions: [
-      {
-        definition: "croiser",
-      },
-    ],
-  },
-  {
-    word: "ɗlaŋmagina",
-    partsOfSpeech: ["noun"],
-    definitions: [
-      {
-        definition: "la grêle",
-      },
-    ],
-  },
-  {
-    word: "ɗlara",
-    partsOfSpeech: ["noun"],
-    definitions: [
-      {
-        definition: "la chose, la coûtume, la façon de faire, l'être",
-      },
-    ],
-  },
-  {
-    word: "ɗlaraɗaɗta",
-    partsOfSpeech: ["noun"],
-    definitions: [
-      {
-        definition: "la glissade",
-      },
-    ],
-  },
-  {
-    word: "ɗlarina",
-    partsOfSpeech: ["noun"],
-    definitions: [
-      {
-        definition: "l'argile pour construire la case ou le grenier",
-        example: "luɓu ɗlarina",
-        exampleTranslation: "l'argile pour construire la case ou le grenier",
-      },
-    ],
-  },
-  {
-    word: "dlayra",
-    partsOfSpeech: ["verb"],
-    definitions: [
-      {
-        definition: "pourrir, aigrir (lait)",
-      },
-    ],
-  },
-  {
-    word: "dlayra",
-    partsOfSpeech: ["noun", "adjective"],
-    definitions: [
-      {
-        definition: "l’acidité",
-      },
-      {
-        definition: "acide, aigre",
-      },
-    ],
-  },
-  {
-    word: "ɗleɗeŋga",
-    partsOfSpeech: ["noun"],
-    definitions: [
-      {
-        definition: "l'auriculaire",
-      },
-    ],
-  },
-  {
-    word: "ɗleeŋe",
-    partsOfSpeech: ["adjective"],
-    definitions: [
-      {
-        definition: "neuf",
-      },
-    ],
-  },
-  {
-    word: "ɗlemerekka",
-    partsOfSpeech: ["noun"],
-    definitions: [
-      {
-        definition: "l'hirondelle",
-      },
-    ],
-  },
-  {
-    word: "ɗlemma",
-    partsOfSpeech: ["noun"],
-    definitions: [
-      {
-        definition: "l'oseille",
-      },
-    ],
-  },
-  {
-    word: "ɗliɓma",
-    partsOfSpeech: ["noun"],
-    definitions: [
-      {
-        definition: "la mouche tsétsé",
-      },
-    ],
-  },
-  {
-    word: "ɗliɗta",
-    partsOfSpeech: ["verb"],
-    definitions: [
-      {
-        definition: "réveiller",
-      },
-      {
-        definition: "le réveil",
-      },
-    ],
-  },
-  {
-    word: "ɗliɗta",
-    partsOfSpeech: ["verb", "noun"],
-    definitions: [
-      {
-        definition: "avoir de l'acné",
-      },
-      {
-        definition: "l'acné, les eruptions cutanées",
-      },
-    ],
-    relatedWords: ["cemeter"],
-  },
-  {
-    word: "ɗlimiɗta",
-    partsOfSpeech: ["noun"],
-    definitions: [
-      {
-        definition:
-          "morceau de calebasse pour ramasser la boule dans la marmite",
-      },
-    ],
-  },
-  {
-    word: "ɗliŋgiɗta",
-    partsOfSpeech: ["noun"],
-    definitions: [
-      {
-        definition: "morceau de poterie cassée",
-      },
-    ],
-  },
-  {
-    word: "dlira",
-    partsOfSpeech: ["verb"],
-    definitions: [
-      {
-        definition: "forger",
-      },
-    ],
-  },
-  {
-    word: "ɗlodlora",
-    partsOfSpeech: ["noun"],
-    definitions: [
-      {
-        definition: "le burin",
-      },
-    ],
-  },
-  {
-    word: "ɗlona",
-    partsOfSpeech: ["noun"],
-    definitions: [
-      {
-        definition: "le lion",
-      },
-    ],
-  },
-  {
-    word: "ɗloonora",
-    partsOfSpeech: ["noun"],
-    definitions: [
-      {
-        definition: "le gombo",
-      },
-    ],
-  },
-  {
-    word: "ɗluɓpa",
-    partsOfSpeech: ["verb"],
-    definitions: [
-      {
-        definition: "envelopper, entourer pour cacher",
-      },
-      {
-        definition: "ensorceler",
-      },
-    ],
-  },
+
   {
     word: "dora",
     partsOfSpeech: ["verb"],
@@ -4084,6 +3803,11 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
     ],
   },
 
+
+
+
+
+
   // // ɗ entrée de dictionnaire
   {
     word: "ɗaara",
@@ -4498,6 +4222,297 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
       },
     ],
   },
+  // // ɗ entrée de dictionnaire
+  {
+    word: "ɗlaana",
+    partsOfSpeech: ["noun"],
+    definitions: [
+      {
+        definition: "le côté intérieur de la cuisse",
+      },
+    ],
+  },
+  {
+    word: "ɗlaɓpa",
+    partsOfSpeech: ["verb", "noun"],
+    definitions: [
+      {
+        definition: "joindre, unir",
+      },
+      {
+        definition: "l’union",
+        example: "ɗlaɓ wayra",
+        exampleTranslation: "faire l’enclos avec des épines",
+      },
+      {
+        definition: "faire une barrière en terre pour pêcher",
+        example: "ɗlaɓ damma",
+        exampleTranslation: "faire une barrière en terre pour pêcher",
+      },
+    ],
+    relatedWords: ["ɗlaɓ wayra", "ɗlaɓ damma"],
+  },
+  {
+    word: "ɗladlakŋa",
+    partsOfSpeech: ["noun"],
+    definitions: [
+      {
+        definition: "la sauterelle",
+      },
+    ],
+  },
+  {
+    word: "ɗlaɗta",
+    partsOfSpeech: ["noun"],
+    definitions: [
+      {
+        definition: "la natte",
+      },
+    ],
+  },
+  {
+    word: "ɗlakka",
+    partsOfSpeech: ["verb"],
+    definitions: [
+      {
+        definition: "attraper au vol, happer au vol",
+      },
+    ],
+  },
+  {
+    word: "ɗlakka",
+    partsOfSpeech: ["verb", "noun"],
+    definitions: [
+      {
+        definition: "trembler, trépider, frissonner",
+      },
+      {
+        definition: "le tremblement, le frisson, le grélotement",
+      },
+    ],
+  },
+  {
+    word: "ɗlamba",
+    partsOfSpeech: ["noun"],
+    definitions: [
+      {
+        definition: "le tabouret, la selle, le trone",
+      },
+    ],
+  },
+  {
+    word: "ɗlaŋaɗta",
+    partsOfSpeech: ["verb"],
+    definitions: [
+      {
+        definition: "croiser",
+      },
+    ],
+  },
+  {
+    word: "ɗlaŋmagina",
+    partsOfSpeech: ["noun"],
+    definitions: [
+      {
+        definition: "la grêle",
+      },
+    ],
+  },
+  {
+    word: "ɗlara",
+    partsOfSpeech: ["noun"],
+    definitions: [
+      {
+        definition: "la chose, la coûtume, la façon de faire, l'être",
+      },
+    ],
+  },
+  {
+    word: "ɗlaraɗaɗta",
+    partsOfSpeech: ["noun"],
+    definitions: [
+      {
+        definition: "la glissade",
+      },
+    ],
+  },
+  {
+    word: "ɗlarina",
+    partsOfSpeech: ["noun"],
+    definitions: [
+      {
+        definition: "l'argile pour construire la case ou le grenier",
+        example: "luɓu ɗlarina",
+        exampleTranslation: "l'argile pour construire la case ou le grenier",
+      },
+    ],
+  },
+  {
+    word: "dlayra",
+    partsOfSpeech: ["verb"],
+    definitions: [
+      {
+        definition: "pourrir, aigrir (lait)",
+      },
+    ],
+  },
+  {
+    word: "dlayra",
+    partsOfSpeech: ["noun", "adjective"],
+    definitions: [
+      {
+        definition: "l’acidité",
+      },
+      {
+        definition: "acide, aigre",
+      },
+    ],
+  },
+  {
+    word: "ɗleɗeŋga",
+    partsOfSpeech: ["noun"],
+    definitions: [
+      {
+        definition: "l'auriculaire",
+      },
+    ],
+  },
+  {
+    word: "ɗleeŋe",
+    partsOfSpeech: ["adjective"],
+    definitions: [
+      {
+        definition: "neuf",
+      },
+    ],
+  },
+  {
+    word: "ɗlemerekka",
+    partsOfSpeech: ["noun"],
+    definitions: [
+      {
+        definition: "l'hirondelle",
+      },
+    ],
+  },
+  {
+    word: "ɗlemma",
+    partsOfSpeech: ["noun"],
+    definitions: [
+      {
+        definition: "l'oseille",
+      },
+    ],
+  },
+  {
+    word: "ɗliɓma",
+    partsOfSpeech: ["noun"],
+    definitions: [
+      {
+        definition: "la mouche tsétsé",
+      },
+    ],
+  },
+  {
+    word: "ɗliɗta",
+    partsOfSpeech: ["verb"],
+    definitions: [
+      {
+        definition: "réveiller",
+      },
+      {
+        definition: "le réveil",
+      },
+    ],
+  },
+  {
+    word: "ɗliɗta",
+    partsOfSpeech: ["verb", "noun"],
+    definitions: [
+      {
+        definition: "avoir de l'acné",
+      },
+      {
+        definition: "l'acné, les eruptions cutanées",
+      },
+    ],
+    relatedWords: ["cemeter"],
+  },
+  {
+    word: "ɗlimiɗta",
+    partsOfSpeech: ["noun"],
+    definitions: [
+      {
+        definition:
+          "morceau de calebasse pour ramasser la boule dans la marmite",
+      },
+    ],
+  },
+  {
+    word: "ɗliŋgiɗta",
+    partsOfSpeech: ["noun"],
+    definitions: [
+      {
+        definition: "morceau de poterie cassée",
+      },
+    ],
+  },
+  {
+    word: "dlira",
+    partsOfSpeech: ["verb"],
+    definitions: [
+      {
+        definition: "forger",
+      },
+    ],
+  },
+  {
+    word: "ɗlodlora",
+    partsOfSpeech: ["noun"],
+    definitions: [
+      {
+        definition: "le burin",
+      },
+    ],
+  },
+  {
+    word: "ɗlona",
+    partsOfSpeech: ["noun"],
+    definitions: [
+      {
+        definition: "le lion",
+      },
+    ],
+  },
+  {
+    word: "ɗloonora",
+    partsOfSpeech: ["noun"],
+    definitions: [
+      {
+        definition: "le gombo",
+      },
+    ],
+  },
+  {
+    word: "ɗluɓpa",
+    partsOfSpeech: ["verb"],
+    definitions: [
+      {
+        definition: "envelopper, entourer pour cacher",
+      },
+      {
+        definition: "ensorceler",
+      },
+    ],
+  },
+
+
+
+
+
+
+
+
 
   // // e entrée de dictionnaire
   {
@@ -4647,6 +4662,12 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
       },
     ],
   },
+
+
+
+
+
+
 
   // // f entrée de dictionnaire
   {
@@ -5122,6 +5143,14 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
       },
     ],
   },
+
+
+
+
+
+
+
+
 
   // // g entrée de dictionnaire
   {
@@ -6832,6 +6861,14 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
     relatedWords: ["guy magira", "guy ndulna", "guy vunna"],
   },
 
+
+
+
+
+
+
+  
+
   // h entree du dictionnaire
   {
     word: "ha",
@@ -7735,6 +7772,11 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
     ],
   },
 
+
+
+
+
+
   // ɦ entree du dictionnaire
   {
     word: "ɦawa",
@@ -8196,6 +8238,12 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
       },
     ],
   },
+
+
+
+
+
+
 
   // i entree du dictionnaire
   {
@@ -8870,6 +8918,11 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
       },
     ],
   },
+
+
+
+
+
 
   // k entree du dictionnaire
   {
@@ -10325,6 +10378,15 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
     ],
   },
 
+
+
+
+
+
+
+
+
+
   // l entree du dictionnaire
   {
     word: "laara",
@@ -11016,6 +11078,14 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
       },
     ],
   },
+
+
+
+
+
+
+
+
 
   // // m entree du dictionnaire
   {
@@ -12178,6 +12248,12 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
     ],
   },
 
+
+
+
+
+
+
   //  // n entree du dictionnaire
   {
     word: "naɓpa",
@@ -13082,6 +13158,14 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
     ],
   },
 
+
+
+
+
+
+
+
+
   // ŋ entree de dictionaire
   {
     word: "ŋgaana",
@@ -13752,6 +13836,13 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
     ],
   },
 
+
+
+
+
+
+
+
   // o entree de dictionaire
   {
     word: "offa",
@@ -13856,6 +13947,12 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
       },
     ],
   },
+
+
+
+
+
+
 
   // // p entree de dictionaire
   {
@@ -14477,6 +14574,13 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
     ],
   },
 
+
+
+
+
+
+
+
   // r entree de dictionaire
   {
     word: "radiyona",
@@ -14505,6 +14609,12 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
       },
     ],
   },
+
+
+
+
+
+
 
   // s entree de dictionaire
   {
@@ -15674,6 +15784,14 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
     ],
   },
 
+
+
+
+
+
+
+
+
   // t entree de dictionaire
   {
     word: "taaɓana",
@@ -16611,6 +16729,16 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
     ],
   },
 
+
+
+
+
+
+
+
+
+
+
   // u entree de dictionnaire
   {
     word: "unda",
@@ -16669,6 +16797,11 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
       },
     ],
   },
+
+
+
+
+
 
   // v entree de dictionnaire
   {
@@ -17111,6 +17244,15 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
     relatedWords: ["vuvu galakka", "vuvu waawna"],
   },
 
+
+
+
+
+
+
+
+
+
   // w entree de dictionnaire
   {
     word: "wa",
@@ -17406,6 +17548,13 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
     ],
   },
 
+
+
+
+
+
+
+
   // y entree de dictionnaire
   {
     word: "yagara",
@@ -17686,6 +17835,14 @@ export const mousseyToFrenchDictionary: DictionaryEntry[] = [
       },
     ],
   },
+
+
+
+
+
+
+
+  
 
   // z entree de dictionnaire
   {
