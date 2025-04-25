@@ -2,13 +2,18 @@
 
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Clipboard from "expo-clipboard";
-import * as Haptics from "expo-haptics";
 import { BlurView } from "expo-blur";
+import * as Clipboard from "expo-clipboard";
+import { useFonts } from "expo-font";
+import * as Haptics from "expo-haptics";
+import { MotiText, MotiView } from "moti";
+import { Skeleton } from "moti/skeleton";
 import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
+  Dimensions,
+  Easing,
   FlatList,
   Modal,
   Platform,
@@ -21,27 +26,23 @@ import {
   ToastAndroid,
   TouchableOpacity,
   View,
-  Dimensions,
-  Easing,
 } from "react-native";
 import { useTheme } from "../context/ThemeContext";
 import { bible } from "../data/bible/bible";
 import { bibleBooks } from "../data/bibleBooks";
-import { MotiView, MotiText } from "moti";
-import { Skeleton } from "moti/skeleton";
-import { useFonts } from "expo-font";
 
 // Import modular components
 import { BibleHeader } from "../components/bible/BibleHeader";
+import { BookItem } from "../components/bible/BookItem";
+import { BookmarkModal } from "../components/bible/BookmarkModal";
+import { ChapterGrid } from "../components/bible/ChapterGrid";
+import { NavigationControls } from "../components/bible/NavigationControls";
 import { TabsNavigation } from "../components/bible/TabsNavigation";
 import { TestamentSelector } from "../components/bible/TestamentSelector";
-import { BookItem } from "../components/bible/BookItem";
-import { ChapterGrid } from "../components/bible/ChapterGrid";
 import { TranslationToggle } from "../components/bible/TranslationToggle";
 import { VerseItem } from "../components/bible/VerseItem";
-import { NavigationControls } from "../components/bible/NavigationControls";
 import { VerseSearchBar } from "../components/bible/VerseSearchBar";
-import { BookmarkModal } from "../components/bible/BookMarkModal";
+import React from "react";
 
 // Function to flatten the structure
 function flattenBibleData(bible: {
