@@ -35,6 +35,20 @@ import genesis_chapter33 from "./genesis_chapter33";
 import genesis_chapter34 from "./genesis_chapter34";
 import genesis_chapter35 from "./genesis_chapter35";
 import genesis_chapter36 from "./genesis_chapter36";
+import genesis_chapter37 from "./genesis_chapter37";
+import genesis_chapter38 from "./genesis_chapter38";
+import genesis_chapter39 from "./genesis_chapter39";
+import genesis_chapter40 from "./genesis_chapter40";
+import genesis_chapter41 from "./genesis_chapter41";
+import genesis_chapter42 from "./genesis_chapter42";
+import genesis_chapter43 from "./genesis_chapter43";
+import genesis_chapter44 from "./genesis_chapter44";
+import genesis_chapter45 from "./genesis_chapter45";
+import genesis_chapter46 from "./genesis_chapter46";
+import genesis_chapter47 from "./genesis_chapter47";
+import genesis_chapter48 from "./genesis_chapter48";
+import genesis_chapter49 from "./genesis_chapter49";
+import genesis_chapter50 from "./genesis_chapter50";
 
 
 
@@ -76,6 +90,18 @@ export const genesis = {
     "1-34": genesis_chapter34,
     "1-35": genesis_chapter35,
     "1-36": genesis_chapter36,
-    
-    
+    "1-37": genesis_chapter37,
+    "1-38": genesis_chapter38,
+    "1-39": genesis_chapter39,
+    "1-40": genesis_chapter40,
+    "1-41": genesis_chapter41,
+    "1-42": genesis_chapter42,
+    "1-43": genesis_chapter43,
+    "1-44": genesis_chapter44,
+    "1-45": genesis_chapter45,
+    "1-46": genesis_chapter46,
+    "1-47": genesis_chapter47,
+    "1-48": genesis_chapter48,
+    "1-49": genesis_chapter49,
+    "1-50": genesis_chapter50,   
 }
