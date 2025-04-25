@@ -199,4 +199,5 @@ const genesisChapter45 = {
   ],
 };
 
+
 export default genesisChapter45;
