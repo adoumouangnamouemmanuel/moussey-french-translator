@@ -1,29 +1,29 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Animated, ScrollView } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Clipboard from "expo-clipboard";
+import { LinearGradient } from "expo-linear-gradient";
+import { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
+  Alert,
+  Animated,
   FlatList,
   Modal,
-  StatusBar,
-  Share,
   Platform,
-  Alert,
+  ScrollView,
+  Share,
+  StatusBar,
   StyleSheet,
+  Text,
+  TextInput,
+  ToastAndroid,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import * as Clipboard from "expo-clipboard";
-import { ToastAndroid } from "react-native";
 import { useTheme } from "../context/ThemeContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { bibleBooks } from "../data/bibleBooks";
 import { bible } from "../data/bible/bible";
-
+import { bibleBooks } from "../data/bibleBooks";
 
 // const mockVersesData: Record<string, { id: string; verse: number; text: string; french: string }[]> = {
 //   // Genesis 1
@@ -365,17 +365,21 @@ import { bible } from "../data/bible/bible";
 //   ],
 // };
 
-
 // Function to flatten the structure
 
-
-function flattenBibleData(bible: { old: Record<string, any>; new: Record<string, any> }) {
-  const result: Record<string, Array<{
-    id: string;
-    verse: number;
-    text: string;
-    french: string;
-  }>> = {};
+function flattenBibleData(bible: {
+  old: Record<string, any>;
+  new: Record<string, any>;
+}) {
+  const result: Record<
+    string,
+    Array<{
+      id: string;
+      verse: number;
+      text: string;
+      french: string;
+    }>
+  > = {};
 
   // Process Old Testament
   for (const [bookName, chapters] of Object.entries(bible.old)) {
@@ -390,7 +394,8 @@ function flattenBibleData(bible: { old: Record<string, any>; new: Record<string,
   // Process New Testament
   for (const [bookName, chapters] of Object.entries(bible.new)) {
     for (const [chapterId, chapterData] of Object.entries(chapters)) {
-      result[chapterId] = (chapterData as Record<string, any>)[chapterId];
+      if (typeof chapterData === "object" && chapterData !== null)
+        result[chapterId] = (chapterData as Record<string, any>)[chapterId];
     }
   }
 
@@ -408,30 +413,34 @@ type Verse = {
 type FlattenedBible = Record<string, Verse[]>;
 
 // With proper typing
-const data: FlattenedBible = flattenBibleData({
-  ...bible,
-  new: {},
-});
-
-
+const data: FlattenedBible = flattenBibleData(bible);
 
 // Create a comprehensive collection of all verses for search functionality
-const allMockVerses = Object.entries(data).flatMap(
-  ([key, verses]) => {
-    const [bookId, chapterId] = key.split("-").map(Number);
-    const book = bibleBooks.find((b) => Number(b.id) === bookId)?.name || "";
+const allMockVerses = Object.entries(data).flatMap(([key, verses]) => {
+  const [bookId, chapterId] = key.split("-").map(Number);
+  const book = bibleBooks.find((b) => Number(b.id) === bookId)?.name || "";
 
-    return verses.map((verse) => ({
-      ...verse,
-      book,
-      chapter: chapterId,
-    }));
-  }
-);
+  return verses.map((verse) => ({
+    ...verse,
+    book,
+    chapter: chapterId,
+  }));
+});
 
 // Replace the static recent readings and bookmarks with empty arrays
-const initialRecentReadings: { id: string; book: string; chapter: number; verse: number }[] = [];
-const initialBookmarks: { id: string; book: string; chapter: number; verse: number; note?: string }[] = [];
+const initialRecentReadings: {
+  id: string;
+  book: string;
+  chapter: number;
+  verse: number;
+}[] = [];
+const initialBookmarks: {
+  id: string;
+  book: string;
+  chapter: number;
+  verse: number;
+  note?: string;
+}[] = [];
 
 // Translation options
 type TranslationOption = "moussey" | "french" | "both";
@@ -649,7 +658,6 @@ export default function BibleScreen() {
       }),
     ]).start();
   };
-
 
   // Copy verse to clipboard
   const copyVerse = (verse: any) => {
