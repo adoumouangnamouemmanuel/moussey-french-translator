@@ -1,27 +1,66 @@
-import { TouchableOpacity, View, Text, StyleSheet, Animated, Easing } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
-import { MotiView } from "moti"
-import * as Haptics from "expo-haptics"
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+  TouchableOpacity,
+  View,
+  Text,
+  StyleSheet,
+  Animated,
+  Easing,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 
 interface BookItemProps {
   item: {
-    id: string
-    name: string
-    chapters: number
-    testament: string
-  }
-  index: number
-  colors: any
-  onPress: (bookId: string) => void
-  fadeAnim: Animated.Value
+    id: string;
+    name: string;
+    chapters: number;
+    testament: string;
+  };
+  index: number;
+  colors: any;
+  onPress: (bookId: string) => void;
+  fadeAnim: Animated.Value;
 }
 
-export const BookItem = ({ item, index, colors, onPress, fadeAnim }: BookItemProps) => {
+export const BookItem = ({
+  item,
+  index,
+  colors,
+  onPress,
+  fadeAnim,
+}: BookItemProps) => {
+  // Create animated values for the animation
+  const [opacity] = useState(new Animated.Value(0));
+  const [translateY] = useState(new Animated.Value(20));
+
+  // Run the animation when the component mounts
+  useEffect(() => {
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 400,
+      delay: index * 50,
+      useNativeDriver: true,
+      easing: Easing.out(Easing.ease),
+    }).start();
+
+    Animated.timing(translateY, {
+      toValue: 0,
+      duration: 400,
+      delay: index * 50,
+      useNativeDriver: true,
+      easing: Easing.out(Easing.ease),
+    }).start();
+  }, [index]);
+
   return (
-    <MotiView
-      from={{ opacity: 0, translateY: 20 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: "timing", duration: 400, delay: index * 50 }}
+    <Animated.View
+      style={{
+        opacity,
+        transform: [{ translateY }],
+      }}
     >
       <TouchableOpacity
         style={[
@@ -45,12 +84,12 @@ export const BookItem = ({ item, index, colors, onPress, fadeAnim }: BookItemPro
             useNativeDriver: true,
             easing: Easing.out(Easing.cubic),
           }).start(() => {
-            onPress(item.id)
-            fadeAnim.setValue(1)
-          })
+            onPress(item.id);
+            fadeAnim.setValue(1);
+          });
 
           // Provide haptic feedback
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         }}
       >
         <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -59,7 +98,9 @@ export const BookItem = ({ item, index, colors, onPress, fadeAnim }: BookItemPro
               styles.bookIcon,
               {
                 backgroundColor:
-                  item.testament === "ancien" ? `${colors.primary}` : `${colors.primary}80`,
+                  item.testament === "ancien"
+                    ? `${colors.primary}`
+                    : `${colors.primary}80`,
               },
             ]}
           >
@@ -92,9 +133,9 @@ export const BookItem = ({ item, index, colors, onPress, fadeAnim }: BookItemPro
           <Ionicons name="chevron-forward" size={20} color={colors.inactive} />
         </View>
       </TouchableOpacity>
-    </MotiView>
-  )
-}
+    </Animated.View>
+  );
+};
 
 const styles = StyleSheet.create({
   bookItem: {
@@ -124,4 +165,6 @@ const styles = StyleSheet.create({
   chapterCount: {
     fontSize: 12,
   },
-})
+});
+
+export default BookItem;

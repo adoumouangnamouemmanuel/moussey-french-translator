@@ -1,6 +1,7 @@
+"use client";
+
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { MotiView } from "moti";
 import {
   Animated,
   StyleSheet,
@@ -9,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useEffect, useState } from "react";
 
 interface BibleHeaderProps {
   colors: any;
@@ -27,16 +29,39 @@ export const BibleHeader = ({
   setSearchQuery,
   searchBarAnim,
 }: BibleHeaderProps) => {
+  // Create animated values for the header content
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [translateYAnim] = useState(new Animated.Value(-10));
+
+  // Run the animation when the component mounts
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateYAnim, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
   return (
     <LinearGradient
       colors={colors.headerBackground as [string, string]}
       style={styles.header}
     >
-      <MotiView
-        from={{ opacity: 0, translateY: -10 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: "timing", duration: 400 }}
-        style={styles.headerContent}
+      <Animated.View
+        style={[
+          styles.headerContent,
+          {
+            opacity: fadeAnim,
+            transform: [{ translateY: translateYAnim }],
+          },
+        ]}
       >
         <Text style={[styles.headerTitle, { fontFamily: "PlayfairBold" }]}>
           Bible
@@ -48,7 +73,7 @@ export const BibleHeader = ({
             color="white"
           />
         </TouchableOpacity>
-      </MotiView>
+      </Animated.View>
 
       {/* Search bar */}
       <Animated.View
@@ -99,7 +124,7 @@ export const BibleHeader = ({
 
 const styles = StyleSheet.create({
   header: {
-    paddingTop: 15,
+    paddingTop: 25,
     paddingBottom: 15,
     paddingHorizontal: 15,
   },
@@ -123,7 +148,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   searchIcon: {
-    marginRight: 10,
+    marginRight: 40,
   },
   searchInput: {
     flex: 1,
@@ -131,3 +156,5 @@ const styles = StyleSheet.create({
     color: "white",
   },
 });
+
+export default BibleHeader;

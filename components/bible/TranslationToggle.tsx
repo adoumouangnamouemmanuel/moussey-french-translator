@@ -1,5 +1,7 @@
-import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
-import { MotiView } from "moti";
+"use client";
+
+import { useEffect, useState } from "react";
+import { TouchableOpacity, Text, StyleSheet, Animated } from "react-native";
 import * as Haptics from "expo-haptics";
 
 type TranslationOption = "moussey" | "french" | "both";
@@ -15,12 +17,34 @@ export const TranslationToggle = ({
   translationOption,
   setTranslationOption,
 }: TranslationToggleProps) => {
+  // Create animated values for the animation
+  const [opacity] = useState(new Animated.Value(0));
+  const [scale] = useState(new Animated.Value(0.95));
+
+  // Run the animation when the component mounts
+  useEffect(() => {
+    Animated.spring(opacity, {
+      toValue: 1,
+      useNativeDriver: true,
+      delay: 200,
+    }).start();
+
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+      delay: 200,
+    }).start();
+  }, []);
+
   return (
-    <MotiView
-      from={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ type: "spring", delay: 200 }}
-      style={styles.translationToggle}
+    <Animated.View
+      style={[
+        styles.translationToggle,
+        {
+          opacity,
+          transform: [{ scale }],
+        },
+      ]}
     >
       <TouchableOpacity
         style={[
@@ -100,7 +124,7 @@ export const TranslationToggle = ({
           Français
         </Text>
       </TouchableOpacity>
-    </MotiView>
+    </Animated.View>
   );
 };
 
@@ -121,3 +145,5 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 });
+
+export default TranslationToggle;

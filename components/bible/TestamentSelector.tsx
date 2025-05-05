@@ -1,7 +1,11 @@
+"use client";
+
+import React from "react";
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
-import { MotiView } from "moti";
+import { Animated } from "react-native";
 import * as Haptics from "expo-haptics";
 
+// Replace MotiView with Animated.View
 interface TestamentSelectorProps {
   colors: any;
   testament: "all" | "ancien" | "nouveau";
@@ -13,11 +17,28 @@ export const TestamentSelector = ({
   testament,
   setTestament,
 }: TestamentSelectorProps) => {
+  // Create an animated value for the animation
+  const [fadeAnim] = React.useState(new Animated.Value(0));
+  const [translateYAnim] = React.useState(new Animated.Value(-10));
+
+  // Run the animation when the component mounts
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateYAnim, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
   return (
-    <MotiView
-      from={{ opacity: 0, translateY: -10 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: "timing", duration: 400 }}
+    <Animated.View
       style={[
         styles.testamentSelector,
         {
@@ -29,6 +50,8 @@ export const TestamentSelector = ({
           shadowOpacity: 0.1,
           shadowRadius: 4,
           elevation: 2,
+          opacity: fadeAnim,
+          transform: [{ translateY: translateYAnim }],
         },
       ]}
     >
@@ -53,6 +76,7 @@ export const TestamentSelector = ({
           style={{
             color: testament === "all" ? "white" : colors.text,
             fontFamily: "MontserratBold",
+            fontSize: 12,
           }}
         >
           Tous
@@ -79,6 +103,7 @@ export const TestamentSelector = ({
           style={{
             color: testament === "ancien" ? "white" : colors.text,
             fontFamily: "MontserratBold",
+            fontSize: 12,
           }}
         >
           Ancien Testament
@@ -105,12 +130,13 @@ export const TestamentSelector = ({
           style={{
             color: testament === "nouveau" ? "white" : colors.text,
             fontFamily: "MontserratBold",
+            fontSize: 12,
           }}
         >
           Nouveau Testament
         </Text>
       </TouchableOpacity>
-    </MotiView>
+    </Animated.View>
   );
 };
 

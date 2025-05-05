@@ -1,7 +1,14 @@
-import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+  View,
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  Animated,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { MotiView, MotiText } from "moti";
-import { SharedElement } from "react-navigation-shared-element";
 import * as Haptics from "expo-haptics";
 
 interface VerseItemProps {
@@ -41,12 +48,72 @@ export const VerseItem = ({
   setShowVerseOptions,
   fontSizes,
 }: VerseItemProps) => {
+  // Create animated values for the animations
+  const [opacity] = useState(new Animated.Value(0));
+  const [translateY] = useState(new Animated.Value(20));
+  const [actionsOpacity] = useState(new Animated.Value(0));
+  const [actionsScale] = useState(new Animated.Value(0.8));
+  const [textOpacity] = useState(new Animated.Value(0));
+  const [translationOpacity] = useState(new Animated.Value(0));
+
+  // Run the animations when the component mounts
+  useEffect(() => {
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 400,
+      delay: index * 50,
+      useNativeDriver: true,
+    }).start();
+
+    Animated.timing(translateY, {
+      toValue: 0,
+      duration: 400,
+      delay: index * 50,
+      useNativeDriver: true,
+    }).start();
+  }, [index]);
+
+  // Run text animations with delays
+  useEffect(() => {
+    Animated.timing(textOpacity, {
+      toValue: 1,
+      duration: 500,
+      delay: index * 50 + 100,
+      useNativeDriver: true,
+    }).start();
+
+    Animated.timing(translationOpacity, {
+      toValue: 1,
+      duration: 500,
+      delay: index * 50 + 200,
+      useNativeDriver: true,
+    }).start();
+  }, [index]);
+
+  // Run actions animations when verse options are shown
+  useEffect(() => {
+    if (showVerseOptions === verse.id) {
+      Animated.spring(actionsOpacity, {
+        toValue: 1,
+        useNativeDriver: true,
+      }).start();
+
+      Animated.spring(actionsScale, {
+        toValue: 1,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      actionsOpacity.setValue(0);
+      actionsScale.setValue(0.8);
+    }
+  }, [showVerseOptions, verse.id]);
+
   return (
-    <MotiView
-      key={verse.id}
-      from={{ opacity: 0, translateY: 20 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: "timing", duration: 400, delay: index * 50 }}
+    <Animated.View
+      style={{
+        opacity,
+        transform: [{ translateY }],
+      }}
     >
       <TouchableOpacity
         style={[
@@ -60,27 +127,28 @@ export const VerseItem = ({
         onLongPress={() => handleVersePress(verse)}
       >
         <View style={styles.verseHeader}>
-          <SharedElement id={`verse.${verse.id}.number`}>
-            <Text
-              style={[
-                styles.verseNumber,
-                {
-                  color: colors.primary,
-                  fontSize: fontSizes.verse,
-                  fontFamily: "PlayfairBold",
-                },
-              ]}
-            >
-              {verse.verse}
-            </Text>
-          </SharedElement>
+          <Text
+            style={[
+              styles.verseNumber,
+              {
+                color: colors.primary,
+                fontSize: fontSizes.verse,
+                fontFamily: "PlayfairBold",
+              },
+            ]}
+          >
+            {verse.verse}
+          </Text>
 
           {showVerseOptions === verse.id && (
-            <MotiView
-              from={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: "spring" }}
-              style={styles.verseActions}
+            <Animated.View
+              style={[
+                styles.verseActions,
+                {
+                  opacity: actionsOpacity,
+                  transform: [{ scale: actionsScale }],
+                },
+              ]}
             >
               <TouchableOpacity
                 style={[
@@ -122,19 +190,12 @@ export const VerseItem = ({
               >
                 <Ionicons name="close" size={16} color="white" />
               </TouchableOpacity>
-            </MotiView>
+            </Animated.View>
           )}
         </View>
 
         {(translationOption === "moussey" || translationOption === "both") && (
-          <MotiText
-            from={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{
-              type: "timing",
-              duration: 500,
-              delay: index * 50 + 100,
-            }}
+          <Animated.Text
             style={[
               styles.verseText,
               {
@@ -142,11 +203,12 @@ export const VerseItem = ({
                 fontSize: fontSizes.text,
                 fontFamily: "Playfair",
                 lineHeight: fontSizes.text * 1.5,
+                opacity: textOpacity,
               },
             ]}
           >
             {verse.text}
-          </MotiText>
+          </Animated.Text>
         )}
 
         {translationOption === "both" && (
@@ -154,14 +216,7 @@ export const VerseItem = ({
         )}
 
         {(translationOption === "french" || translationOption === "both") && (
-          <MotiText
-            from={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{
-              type: "timing",
-              duration: 500,
-              delay: index * 50 + 200,
-            }}
+          <Animated.Text
             style={[
               styles.verseTranslation,
               {
@@ -174,14 +229,15 @@ export const VerseItem = ({
                 lineHeight:
                   (fontSizes.text - (translationOption === "both" ? 2 : 0)) *
                   1.5,
+                opacity: translationOpacity,
               },
             ]}
           >
             {verse.french}
-          </MotiText>
+          </Animated.Text>
         )}
       </TouchableOpacity>
-    </MotiView>
+    </Animated.View>
   );
 };
 
@@ -224,3 +280,5 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
 });
+
+export default VerseItem;

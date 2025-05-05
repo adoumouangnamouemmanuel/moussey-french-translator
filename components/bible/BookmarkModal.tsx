@@ -1,6 +1,8 @@
-import { BlurView } from "expo-blur";
-import { MotiView } from "moti";
+"use client";
+
+import { useEffect, useState } from "react";
 import {
+  Animated,
   Modal,
   StyleSheet,
   Text,
@@ -36,6 +38,31 @@ export const BookmarkModal = ({
   addBookmark,
   bibleBooks,
 }: BookmarkModalProps) => {
+  // Create animated values for the animations
+  const [opacity] = useState(new Animated.Value(0));
+  const [scale] = useState(new Animated.Value(0.9));
+
+  // Run the animation when the modal is shown
+  useEffect(() => {
+    if (showBookmarkModal) {
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Reset animations when modal is hidden
+      opacity.setValue(0);
+      scale.setValue(0.9);
+    }
+  }, [showBookmarkModal]);
+
   return (
     <Modal
       visible={showBookmarkModal}
@@ -43,15 +70,16 @@ export const BookmarkModal = ({
       animationType="fade"
       onRequestClose={() => setShowBookmarkModal(false)}
     >
-      <BlurView
-        intensity={80}
-        tint={nightMode ? "dark" : "light"}
-        style={styles.modalOverlay}
+      <View
+        style={[
+          styles.modalOverlay,
+          {
+            backgroundColor: nightMode ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0.5)",
+          },
+        ]}
       >
-        <MotiView
-          from={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: "spring" }}
+        <Animated.View
+          key="bookmark-modal"
           style={[
             styles.modalContainer,
             {
@@ -62,6 +90,8 @@ export const BookmarkModal = ({
               shadowOpacity: 0.2,
               shadowRadius: 8,
               elevation: 8,
+              opacity,
+              transform: [{ scale }],
             },
           ]}
         >
@@ -157,8 +187,8 @@ export const BookmarkModal = ({
               </Text>
             </TouchableOpacity>
           </View>
-        </MotiView>
-      </BlurView>
+        </Animated.View>
+      </View>
     </Modal>
   );
 };
@@ -168,27 +198,29 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContainer: {
     width: "80%",
-    borderRadius: 10,
+    borderRadius: 16,
     padding: 20,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "600",
     marginBottom: 5,
   },
   modalSubtitle: {
-    fontSize: 14,
+    fontSize: 16,
     marginBottom: 15,
   },
   noteInput: {
     borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
-    minHeight: 100,
+    borderRadius: 12,
+    padding: 15,
+    minHeight: 120,
     textAlignVertical: "top",
+    fontSize: 16,
   },
   modalButtons: {
     flexDirection: "row",
@@ -196,17 +228,23 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   modalButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
     marginLeft: 10,
     borderWidth: 1,
+    minWidth: 100,
+    alignItems: "center",
   },
   modalButtonText: {
     fontWeight: "500",
+    fontSize: 16,
   },
   modalButtonTextPrimary: {
     color: "white",
     fontWeight: "500",
+    fontSize: 16,
   },
 });
+
+export default BookmarkModal;

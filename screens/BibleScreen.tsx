@@ -6,8 +6,7 @@ import { BlurView } from "expo-blur";
 import * as Clipboard from "expo-clipboard";
 import { useFonts } from "expo-font";
 import * as Haptics from "expo-haptics";
-import { MotiText, MotiView } from "moti";
-import { Skeleton } from "moti/skeleton";
+import CustomSkeleton from "../components/bible/CustomSkeleton";
 import { useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -60,7 +59,7 @@ function flattenBibleData(bible: {
   > = {};
 
   // Process Old Testament
-  for (const [bookName, chapters] of Object.entries(bible.old)) {
+  for (const [ , chapters] of Object.entries(bible.old)) {
     for (const [chapterId, chapterData] of Object.entries(chapters)) {
       // The chapter data is an object with a single key matching the chapterId
       if (typeof chapterData === "object" && chapterData !== null) {
@@ -70,7 +69,7 @@ function flattenBibleData(bible: {
   }
 
   // Process New Testament
-  for (const [bookName, chapters] of Object.entries(bible.new)) {
+  for (const [, chapters] of Object.entries(bible.new)) {
     for (const [chapterId, chapterData] of Object.entries(chapters)) {
       if (typeof chapterData === "object" && chapterData !== null)
         result[chapterId] = (chapterData as Record<string, any>)[chapterId];
@@ -92,8 +91,7 @@ type FlattenedBible = Record<string, Verse[]>;
 
 // With proper typing
 const data: FlattenedBible = flattenBibleData({
-  ...bible,
-  new: {},
+  ...bible
 });
 
 // Create a comprehensive collection of all verses for search functionality
@@ -167,6 +165,12 @@ export default function BibleScreen() {
   const tabIndicatorPosition = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
 
+  // Replace with: to fix moti error
+  const [textOpacity] = useState(new Animated.Value(0));
+  const [textScale] = useState(new Animated.Value(0.9));
+  const [opacity] = useState(new Animated.Value(0));
+  const [translateY] = useState(new Animated.Value(20));
+
   // Refs
   const scrollViewRef = useRef<ScrollView>(null);
   const flatListRef = useRef<FlatList>(null);
@@ -183,6 +187,33 @@ export default function BibleScreen() {
 
   // Screen dimensions
   const { width: screenWidth } = Dimensions.get("window");
+
+  // fix moti error
+  useEffect(() => {
+    Animated.spring(textOpacity, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+    Animated.spring(textScale, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   // Load data from localStorage on component mount
   useEffect(() => {
@@ -635,10 +666,7 @@ export default function BibleScreen() {
     });
 
     return (
-      <MotiView
-        from={{ opacity: 0, translateY: 20 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: "timing", duration: 400 }}
+      <Animated.View
         style={[styles.versesContainer, { backgroundColor: colors.card }]}
       >
         <Animated.View
@@ -675,17 +703,14 @@ export default function BibleScreen() {
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
 
-          <MotiText
-            from={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring", delay: 100 }}
+          <Animated.Text
             style={[
               styles.versesTitle,
               { color: colors.text, fontFamily: "PlayfairBold" },
             ]}
           >
             {book.name} {selectedChapter}
-          </MotiText>
+          </Animated.Text>
 
           <View style={styles.headerActions}>
             <TouchableOpacity
@@ -730,10 +755,7 @@ export default function BibleScreen() {
 
         {/* Search Results */}
         {showVerseSearch && verseSearchQuery.length > 0 && (
-          <MotiView
-            from={{ opacity: 0, translateY: 10 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: "timing", duration: 300 }}
+          <Animated.View
             style={[
               styles.searchResultsContainer,
               { backgroundColor: colors.background },
@@ -744,14 +766,19 @@ export default function BibleScreen() {
                 data={searchResults}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item, index }) => (
-                  <MotiView
-                    from={{ opacity: 0, translateY: 10 }}
-                    animate={{ opacity: 1, translateY: 0 }}
-                    transition={{
-                      type: "timing",
-                      duration: 300,
-                      delay: index * 50,
-                    }}
+                  <Animated.View
+                    style={{
+                      opacity: textOpacity,
+                      transform: [
+                        {
+                          translateY: textOpacity.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [20, 0],
+                          }),
+                        },
+                      ],
+                    }
+                  }
                   >
                     <TouchableOpacity
                       style={[
@@ -784,7 +811,7 @@ export default function BibleScreen() {
                         {item.text}
                       </Text>
                     </TouchableOpacity>
-                  </MotiView>
+                  </Animated.View>
                 )}
               />
             ) : (
@@ -802,7 +829,7 @@ export default function BibleScreen() {
                 </Text>
               </View>
             )}
-          </MotiView>
+          </Animated.View>
         )}
 
         {!showVerseSearch && (
@@ -872,17 +899,14 @@ export default function BibleScreen() {
             />
           </>
         )}
-      </MotiView>
+      </Animated.View>
     );
   };
 
   // Render recent readings
   const renderRecentReadings = () => {
     return (
-      <MotiView
-        from={{ opacity: 0, translateY: 20 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: "timing", duration: 400 }}
+      <Animated.View
         style={[
           styles.recentContainer,
           {
@@ -911,7 +935,7 @@ export default function BibleScreen() {
 
         {isLoading ? (
           Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton
+            <CustomSkeleton
               key={index}
               width="100%"
               height={60}
@@ -921,10 +945,7 @@ export default function BibleScreen() {
             />
           ))
         ) : recentReadings.length === 0 ? (
-          <MotiView
-            from={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ type: "timing", duration: 400 }}
+          <Animated.View
             style={styles.emptyContainer}
           >
             <Ionicons name="book-outline" size={48} color={colors.inactive} />
@@ -940,14 +961,11 @@ export default function BibleScreen() {
             >
               Aucune lecture récente
             </Text>
-          </MotiView>
+          </Animated.View>
         ) : (
           recentReadings.map((item, index) => (
-            <MotiView
+            <Animated.View
               key={item.id}
-              from={{ opacity: 0, translateX: -20 }}
-              animate={{ opacity: 1, translateX: 0 }}
-              transition={{ type: "spring", delay: index * 100 }}
               style={[
                 styles.recentItem,
                 {
@@ -1041,20 +1059,17 @@ export default function BibleScreen() {
                   color={colors.inactive}
                 />
               </TouchableOpacity>
-            </MotiView>
+            </Animated.View>
           ))
         )}
-      </MotiView>
+      </Animated.View>
     );
   };
 
   // Render bookmarks
   const renderBookmarks = () => {
     return (
-      <MotiView
-        from={{ opacity: 0, translateY: 20 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: "timing", duration: 400 }}
+      <Animated.View
         style={[
           styles.bookmarksContainer,
           {
@@ -1083,7 +1098,7 @@ export default function BibleScreen() {
 
         {isLoading ? (
           Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton
+            <CustomSkeleton
               key={index}
               width="100%"
               height={80}
@@ -1093,10 +1108,7 @@ export default function BibleScreen() {
             />
           ))
         ) : bookmarks.length === 0 ? (
-          <MotiView
-            from={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ type: "timing", duration: 400 }}
+          <Animated.View
             style={styles.emptyContainer}
           >
             <Ionicons
@@ -1116,14 +1128,11 @@ export default function BibleScreen() {
             >
               Aucun signet
             </Text>
-          </MotiView>
+          </Animated.View>
         ) : (
-          bookmarks.map((item, index) => (
-            <MotiView
-              key={item.id}
-              from={{ opacity: 0, translateX: -20 }}
-              animate={{ opacity: 1, translateX: 0 }}
-              transition={{ type: "spring", delay: index * 100 }}
+              bookmarks.map((item, index) => (
+            <Animated.View
+              key={item.id || index}
               style={[
                 styles.bookmarkItem,
                 {
@@ -1203,10 +1212,10 @@ export default function BibleScreen() {
                   />
                 </View>
               </TouchableOpacity>
-            </MotiView>
+            </Animated.View>
           ))
         )}
-      </MotiView>
+      </Animated.View>
     );
   };
 
@@ -1242,7 +1251,7 @@ export default function BibleScreen() {
           {isLoading ? (
             <View style={{ padding: 12 }}>
               {Array.from({ length: 10 }).map((_, index) => (
-                <Skeleton
+                <CustomSkeleton
                   key={index}
                   width="100%"
                   height={70}
@@ -1303,10 +1312,7 @@ export default function BibleScreen() {
           tint={nightMode ? "dark" : "light"}
           style={styles.modalOverlay}
         >
-          <MotiView
-            from={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring" }}
+          <Animated.View
             style={[
               styles.modalContainer,
               {
@@ -1456,7 +1462,7 @@ export default function BibleScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
-          </MotiView>
+          </Animated.View>
         </BlurView>
       </Modal>
     );
@@ -1476,10 +1482,7 @@ export default function BibleScreen() {
           tint={nightMode ? "dark" : "light"}
           style={styles.modalOverlay}
         >
-          <MotiView
-            from={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring" }}
+          <Animated.View
             style={[
               styles.modalContainer,
               {
@@ -1726,7 +1729,7 @@ export default function BibleScreen() {
                 Terminé
               </Text>
             </TouchableOpacity>
-          </MotiView>
+          </Animated.View>
         </BlurView>
       </Modal>
     );
