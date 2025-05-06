@@ -1,95 +1,48 @@
-"use client";
-
-import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
 import {
-  Animated,
-  FlatList,
   StyleSheet,
-  Text,
-  TouchableOpacity,
   View,
+  Text,
+  FlatList,
+  TouchableOpacity,
 } from "react-native";
-import { getAllDictionaryEntries } from "../../../utils/dictionary";
+import { Ionicons } from "@expo/vector-icons";
+import type { DictionaryEntry } from "../../utils/dictionary";
 
-interface AudioTabProps {
+type AudioTabProps = {
   colors: any;
-}
+  entries: DictionaryEntry[];
+};
 
-export const AudioTab = ({ colors }: AudioTabProps) => {
-  const [fadeAnim] = useState(new Animated.Value(0));
-  const [translateYAnim] = useState(new Animated.Value(20));
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateYAnim, {
-        toValue: 0,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
+const AudioTab = ({ colors, entries }: AudioTabProps) => {
   const cardColor = colors?.card || "white";
   const textColor = colors?.text || "#333";
   const inactiveColor = colors?.inactive || "#999";
   const primaryColor = colors?.primary || "#008080";
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          opacity: fadeAnim,
-          transform: [{ translateY: translateYAnim }],
-        },
-      ]}
-    >
+    <View style={styles.tabContentContainer}>
       <View style={[styles.tabHeader, { backgroundColor: cardColor }]}>
-        <Text
-          style={[
-            styles.tabTitle,
-            { color: textColor, fontFamily: "PlayfairBold" },
-          ]}
-        >
+        <Text style={[styles.tabTitle, { color: textColor }]}>
           Dictionnaire Audio
         </Text>
       </View>
       <View style={styles.audioListContainer}>
-        <Text
-          style={[
-            styles.audioSectionTitle,
-            { color: textColor, fontFamily: "PlayfairBold" },
-          ]}
-        >
+        <Text style={[styles.audioSectionTitle, { color: textColor }]}>
           Récemment écoutés
         </Text>
         <FlatList
-          data={getAllDictionaryEntries().slice(0, 5)}
+          data={entries}
           keyExtractor={(item) => `audio-${item.id}`}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={[styles.audioItem, { backgroundColor: cardColor }]}
             >
               <View style={styles.audioItemContent}>
-                <Text
-                  style={[
-                    styles.audioItemTitle,
-                    { color: textColor, fontFamily: "PlayfairBold" },
-                  ]}
-                >
+                <Text style={[styles.audioItemTitle, { color: textColor }]}>
                   {item.id.startsWith("f2m_") ? item.french : item.moussey}
                 </Text>
                 <Text
-                  style={[
-                    styles.audioItemSubtitle,
-                    { color: inactiveColor, fontFamily: "Montserrat" },
-                  ]}
+                  style={[styles.audioItemSubtitle, { color: inactiveColor }]}
                 >
                   {item.id.startsWith("f2m_") ? item.moussey : item.french}
                 </Text>
@@ -106,12 +59,12 @@ export const AudioTab = ({ colors }: AudioTabProps) => {
           )}
         />
       </View>
-    </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  tabContentContainer: {
     flex: 1,
   },
   tabHeader: {
@@ -135,13 +88,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 15,
-    borderRadius: 12,
+    borderRadius: 10,
     marginBottom: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    elevation: 2,
+    elevation: 1,
   },
   audioItemContent: {
     flex: 1,
@@ -155,9 +108,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   audioPlayButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
   },
