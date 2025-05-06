@@ -2,7 +2,7 @@
 
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
+import React from "react";
 import {
   Animated,
   StyleSheet,
@@ -11,46 +11,41 @@ import {
   View,
 } from "react-native";
 
-interface DictionaryHeaderProps {
+type DictionaryHeaderProps = {
   colors: any;
   searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  searchInputRef: any;
+  searchInputRef: React.RefObject<TextInput>;
+  onSearchChange: (text: string) => void;
+  onSearchFocus: () => void;
+  onSearchSubmit: () => void;
+  onClearSearch: () => void;
   onMicPress: () => void;
-  onFocus: () => void;
-  onSubmitEditing: () => void;
-  onGoBack: () => void;
-}
+  onBackPress: () => void;
+};
 
-export const DictionaryHeader = ({
+const DictionaryHeader = ({
   colors,
   searchQuery,
-  setSearchQuery,
   searchInputRef,
+  onSearchChange,
+  onSearchFocus,
+  onSearchSubmit,
+  onClearSearch,
   onMicPress,
-  onFocus,
-  onSubmitEditing,
-  onGoBack,
+  onBackPress,
 }: DictionaryHeaderProps) => {
-  const [fadeAnim] = useState(new Animated.Value(0));
-  const [translateYAnim] = useState(new Animated.Value(-10));
+  // Animation for search bar
+  const searchBarAnim = React.useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateYAnim, {
-        toValue: 0,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-    ]).start();
+  React.useEffect(() => {
+    Animated.timing(searchBarAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
   }, []);
 
-  // Use theme colors or fallback to original colors
+  // Theme colors
   const headerColors: [string, string, ...string[]] = (
     colors?.headerBackground?.length >= 2
       ? colors.headerBackground
@@ -62,75 +57,81 @@ export const DictionaryHeader = ({
 
   return (
     <LinearGradient colors={headerColors} style={styles.header}>
+      <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
+        <Ionicons name="arrow-back" size={24} color="white" />
+      </TouchableOpacity>
+
       <Animated.View
         style={[
-          styles.headerContent,
+          styles.searchContainerWrapper,
           {
-            opacity: fadeAnim,
-            transform: [{ translateY: translateYAnim }],
+            transform: [
+              {
+                translateY: searchBarAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [10, 0],
+                }),
+              },
+              { scale: searchBarAnim },
+            ],
+            opacity: searchBarAnim,
           },
         ]}
       >
-        <TouchableOpacity onPress={onGoBack} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
         <View style={[styles.searchContainer, { backgroundColor: cardColor }]}>
           <TextInput
             ref={searchInputRef}
-            style={[
-              styles.searchInput,
-              { color: textColor, fontFamily: "Montserrat" },
-            ]}
+            style={[styles.searchInput, { color: textColor }]}
             placeholder="Rechercher..."
             placeholderTextColor={inactiveColor}
             value={searchQuery}
-            onChangeText={setSearchQuery}
-            onFocus={onFocus}
+            onChangeText={onSearchChange}
+            onFocus={onSearchFocus}
             returnKeyType="search"
-            onSubmitEditing={onSubmitEditing}
+            onSubmitEditing={onSearchSubmit}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity
               style={styles.clearButton}
-              onPress={() => setSearchQuery("")}
+              onPress={onClearSearch}
             >
               <Ionicons name="close-circle" size={18} color={inactiveColor} />
             </TouchableOpacity>
           )}
         </View>
-        <TouchableOpacity onPress={onMicPress} style={styles.micSearchButton}>
-          <Ionicons name="mic-outline" size={24} color="white" />
-        </TouchableOpacity>
       </Animated.View>
+
+      <TouchableOpacity onPress={onMicPress} style={styles.micSearchButton}>
+        <Animated.View
+          style={{
+            transform: [{ scale: searchBarAnim }],
+            opacity: searchBarAnim,
+          }}
+        >
+          <Ionicons name="mic-outline" size={24} color="white" />
+        </Animated.View>
+      </TouchableOpacity>
     </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   header: {
-    paddingTop: 45,
-    paddingBottom: 15,
-    paddingHorizontal: 15,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-  },
-  headerContent: {
     flexDirection: "row",
     alignItems: "center",
+    padding: 10,
+    paddingTop: 40, // Account for status bar
   },
   backButton: {
     padding: 5,
     marginRight: 5,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.2)",
+  },
+  searchContainerWrapper: {
+    flex: 1,
   },
   searchContainer: {
-    flex: 1,
-    borderRadius: 12,
+    backgroundColor: "white",
+    borderRadius: 8,
     height: 40,
     justifyContent: "center",
     flexDirection: "row",
@@ -145,19 +146,14 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 10,
     fontSize: 16,
+    color: "#333",
   },
   clearButton: {
     padding: 8,
   },
   micSearchButton: {
-    padding: 5,
+    padding: 10,
     marginLeft: 5,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.2)",
   },
 });
 
