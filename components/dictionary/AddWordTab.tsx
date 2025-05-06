@@ -1,54 +1,28 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import {
-  Animated,
   StyleSheet,
+  View,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
 } from "react-native";
 
-interface AddWordTabProps {
+type AddWordTabProps = {
   colors: any;
   newWord: {
     moussey: string;
     french: string;
     pronunciation: string;
   };
-  setNewWord: (word: {
-    moussey: string;
-    french: string;
-    pronunciation: string;
-  }) => void;
-  onAddNewWord: () => void;
-}
+  setNewWord: (word: any) => void;
+  onAddWord: () => void;
+};
 
-export const AddWordTab = ({
+const AddWordTab = ({
   colors,
   newWord,
   setNewWord,
-  onAddNewWord,
+  onAddWord,
 }: AddWordTabProps) => {
-  const [fadeAnim] = useState(new Animated.Value(0));
-  const [translateYAnim] = useState(new Animated.Value(20));
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateYAnim, {
-        toValue: 0,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
   const cardColor = colors?.card || "white";
   const textColor = colors?.text || "#333";
   const inactiveColor = colors?.inactive || "#999";
@@ -56,43 +30,21 @@ export const AddWordTab = ({
   const backgroundColor = colors?.background || "#f5f5f5";
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          opacity: fadeAnim,
-          transform: [{ translateY: translateYAnim }],
-        },
-      ]}
-    >
+    <View style={styles.tabContentContainer}>
       <View style={[styles.tabHeader, { backgroundColor: cardColor }]}>
-        <Text
-          style={[
-            styles.tabTitle,
-            { color: textColor, fontFamily: "PlayfairBold" },
-          ]}
-        >
+        <Text style={[styles.tabTitle, { color: textColor }]}>
           Ajouter un nouveau mot
         </Text>
       </View>
       <View style={[styles.addWordForm, { backgroundColor: cardColor }]}>
         <View style={styles.formGroup}>
-          <Text
-            style={[
-              styles.formLabel,
-              { color: textColor, fontFamily: "MontserratBold" },
-            ]}
-          >
+          <Text style={[styles.formLabel, { color: textColor }]}>
             Mot Moussey
           </Text>
           <TextInput
             style={[
               styles.formInput,
-              {
-                backgroundColor: backgroundColor,
-                color: textColor,
-                fontFamily: "Montserrat",
-              },
+              { backgroundColor: backgroundColor, color: textColor },
             ]}
             placeholder="Entrez le mot en Moussey"
             placeholderTextColor={inactiveColor}
@@ -101,22 +53,13 @@ export const AddWordTab = ({
           />
         </View>
         <View style={styles.formGroup}>
-          <Text
-            style={[
-              styles.formLabel,
-              { color: textColor, fontFamily: "MontserratBold" },
-            ]}
-          >
+          <Text style={[styles.formLabel, { color: textColor }]}>
             Traduction Française
           </Text>
           <TextInput
             style={[
               styles.formInput,
-              {
-                backgroundColor: backgroundColor,
-                color: textColor,
-                fontFamily: "Montserrat",
-              },
+              { backgroundColor: backgroundColor, color: textColor },
             ]}
             placeholder="Entrez la traduction française"
             placeholderTextColor={inactiveColor}
@@ -125,22 +68,13 @@ export const AddWordTab = ({
           />
         </View>
         <View style={styles.formGroup}>
-          <Text
-            style={[
-              styles.formLabel,
-              { color: textColor, fontFamily: "MontserratBold" },
-            ]}
-          >
+          <Text style={[styles.formLabel, { color: textColor }]}>
             Prononciation
           </Text>
           <TextInput
             style={[
               styles.formInput,
-              {
-                backgroundColor: backgroundColor,
-                color: textColor,
-                fontFamily: "Montserrat",
-              },
+              { backgroundColor: backgroundColor, color: textColor },
             ]}
             placeholder="Entrez la prononciation"
             placeholderTextColor={inactiveColor}
@@ -152,21 +86,17 @@ export const AddWordTab = ({
         </View>
         <TouchableOpacity
           style={[styles.submitButton, { backgroundColor: primaryColor }]}
-          onPress={onAddNewWord}
+          onPress={onAddWord}
         >
-          <Text
-            style={[styles.submitButtonText, { fontFamily: "MontserratBold" }]}
-          >
-            Ajouter le mot
-          </Text>
+          <Text style={styles.submitButtonText}>Ajouter le mot</Text>
         </TouchableOpacity>
       </View>
-    </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  tabContentContainer: {
     flex: 1,
   },
   tabHeader: {
@@ -181,7 +111,7 @@ const styles = StyleSheet.create({
   addWordForm: {
     margin: 15,
     padding: 15,
-    borderRadius: 15,
+    borderRadius: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -199,13 +129,13 @@ const styles = StyleSheet.create({
   formInput: {
     borderWidth: 1,
     borderColor: "#e0e0e0",
-    borderRadius: 10,
-    padding: 12,
+    borderRadius: 5,
+    padding: 10,
     fontSize: 16,
   },
   submitButton: {
     padding: 12,
-    borderRadius: 25,
+    borderRadius: 5,
     alignItems: "center",
     marginTop: 10,
   },
