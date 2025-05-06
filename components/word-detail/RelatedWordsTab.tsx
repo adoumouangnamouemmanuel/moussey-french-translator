@@ -28,23 +28,29 @@ const RelatedWordsTab = ({
   emptyIcon,
   emptyText,
 }: RelatedWordsTabProps) => {
-  // Animation values for staggered appearance
-  const animatedValues = useRef(words.map(() => new Animated.Value(0))).current;
-  const scaleAnims = useRef(words.map(() => new Animated.Value(1))).current;
+  // Animation values for staggered appearance - initialize with empty array if words is empty
+  const animatedValues = useRef(
+    words && words.length > 0 ? words.map(() => new Animated.Value(0)) : []
+  ).current;
+  const scaleAnims = useRef(
+    words && words.length > 0 ? words.map(() => new Animated.Value(1)) : []
+  ).current;
 
   // Run animations on mount
   useEffect(() => {
-    const animations = animatedValues.map((anim, index) => {
-      return Animated.timing(anim, {
-        toValue: 1,
-        duration: 300,
-        delay: 100 + index * 100,
-        useNativeDriver: true,
+    if (words && words.length > 0) {
+      const animations = animatedValues.map((anim, index) => {
+        return Animated.timing(anim, {
+          toValue: 1,
+          duration: 300,
+          delay: 100 + index * 100,
+          useNativeDriver: true,
+        });
       });
-    });
 
-    Animated.stagger(50, animations).start();
-  }, [words]);
+      Animated.stagger(50, animations).start();
+    }
+  }, [words, animatedValues]);
 
   // Use theme colors or fallback to original colors
   const cardColor = colors?.card || "white";
@@ -53,41 +59,49 @@ const RelatedWordsTab = ({
   const primaryColor = colors?.primary || "#008080";
 
   const onPressIn = (index: number) => {
-    Animated.spring(scaleAnims[index], {
-      toValue: 0.97,
-      friction: 5,
-      tension: 300,
-      useNativeDriver: true,
-    }).start();
+    if (scaleAnims[index]) {
+      Animated.spring(scaleAnims[index], {
+        toValue: 0.97,
+        friction: 5,
+        tension: 300,
+        useNativeDriver: true,
+      }).start();
+    }
   };
 
   const onPressOut = (index: number) => {
-    Animated.spring(scaleAnims[index], {
-      toValue: 1,
-      friction: 3,
-      tension: 400,
-      useNativeDriver: true,
-    }).start();
+    if (scaleAnims[index]) {
+      Animated.spring(scaleAnims[index], {
+        toValue: 1,
+        friction: 3,
+        tension: 400,
+        useNativeDriver: true,
+      }).start();
+    }
   };
 
   return (
     <View style={[styles.tabContent, { backgroundColor: cardColor }]}>
-      {words.length > 0 ? (
+      {words && words.length > 0 ? (
         words.map((word, index) => {
+          // Make sure we have valid animation values
+          const animValue = animatedValues[index] || new Animated.Value(0);
+          const scaleValue = scaleAnims[index] || new Animated.Value(1);
+
           return (
             <Animated.View
               key={word.id}
               style={[
                 {
-                  opacity: animatedValues[index],
+                  opacity: animValue,
                   transform: [
                     {
-                      translateY: animatedValues[index].interpolate({
+                      translateY: animValue.interpolate({
                         inputRange: [0, 1],
                         outputRange: [20, 0],
                       }),
                     },
-                    { scale: scaleAnims[index] },
+                    { scale: scaleValue },
                   ],
                 },
                 index > 0 && { marginTop: 8 },
