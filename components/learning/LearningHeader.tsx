@@ -108,9 +108,11 @@ const LearningHeader = ({
 
 const styles = StyleSheet.create({
   header: {
-    paddingTop: Platform.OS === "ios" ? 50 : StatusBar.currentHeight || 15,
+    paddingTop: 45, //Platform.OS === "ios" ? 50 : StatusBar.currentHeight || 45,
     paddingBottom: 15,
     paddingHorizontal: 15,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   headerContent: {
     flexDirection: "row",
