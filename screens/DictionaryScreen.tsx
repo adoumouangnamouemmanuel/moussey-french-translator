@@ -61,6 +61,7 @@ export default function DictionaryScreen() {
     moussey: "",
     french: "",
     pronunciation: "",
+    examples: [] as { example: string; translation: string }[],
   });
   const [dynamicSuggestions, setDynamicSuggestions] = useState<string[]>([]);
 
@@ -324,9 +325,13 @@ export default function DictionaryScreen() {
     }
 
     // In a real app, this would add the word to the database
-    // For now, we'll just close the modal
-    setShowAddWordModal(false);
-    setNewWord({ moussey: "", french: "", pronunciation: "" });
+    // For now, we'll just reset the form
+    setNewWord({
+      moussey: "",
+      french: "",
+      pronunciation: "",
+      examples: [],
+    });
   };
 
   // Theme colors
@@ -437,7 +442,7 @@ export default function DictionaryScreen() {
           visible={showAddWordModal}
           colors={colors}
           newWord={newWord}
-          onChangeWord={setNewWord}
+          onChangeWord={(word) => setNewWord({ ...word, examples: newWord.examples })}
           onAddWord={handleAddNewWord}
           onClose={() => setShowAddWordModal(false)}
         />
