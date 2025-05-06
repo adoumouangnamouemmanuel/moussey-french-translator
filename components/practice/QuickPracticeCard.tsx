@@ -11,7 +11,7 @@ type QuickPracticeCardProps = {
   description: string;
   icon: string;
   colors: any;
-  gradientColors: [string, string, ...string[]];
+  gradientColors: string[];
   index: number;
   onPress: () => void;
 };
@@ -83,7 +83,7 @@ const QuickPracticeCard = ({
         activeOpacity={0.9}
         style={styles.touchable}
       >
-        <LinearGradient colors={gradientColors} style={styles.gradient}>
+        <LinearGradient colors={[gradientColors[0], gradientColors[1], ...gradientColors.slice(2)]} style={styles.gradient}>
           <Ionicons name={icon as any} size={30} color="white" />
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.description}>{description}</Text>
