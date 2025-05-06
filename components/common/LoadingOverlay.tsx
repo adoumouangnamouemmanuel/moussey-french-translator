@@ -1,11 +1,15 @@
+"use client";
 import { StyleSheet, View, Text, ActivityIndicator } from "react-native";
 
 type LoadingOverlayProps = {
   colors: any;
-  message: string;
+  message?: string;
 };
 
-const LoadingOverlay = ({ colors, message }: LoadingOverlayProps) => {
+const LoadingOverlay = ({
+  colors,
+  message = "Chargement...",
+}: LoadingOverlayProps) => {
   const cardColor = colors?.card || "white";
   const textColor = colors?.text || "#333";
   const primaryColor = colors?.primary || "#008080";

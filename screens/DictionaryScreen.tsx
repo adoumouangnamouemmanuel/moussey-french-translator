@@ -8,7 +8,8 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Animated,
-  TouchableOpacity, // Added TouchableOpacity import
+  TouchableOpacity,
+  type TextInput,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -220,7 +221,7 @@ export default function DictionaryScreen() {
   const [dynamicSuggestions, setDynamicSuggestions] = useState<string[]>([]);
 
   // Refs
-  const searchInputRef = useRef(null);
+  const searchInputRef = useRef<TextInput>(null);
   const micScale = useRef(new Animated.Value(1)).current;
   const micPulse = useRef<Animated.CompositeAnimation | null>(null);
 
@@ -452,7 +453,6 @@ export default function DictionaryScreen() {
     setSearchQuery("");
     setShowSuggestions(true);
     if (searchInputRef.current) {
-      // @ts-ignore
       searchInputRef.current.focus();
     }
   };
