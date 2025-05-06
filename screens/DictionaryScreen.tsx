@@ -4,22 +4,15 @@ import { useState, useRef, useEffect } from "react";
 import {
   StyleSheet,
   View,
-  Text,
-  TextInput,
-  FlatList,
-  TouchableOpacity,
   StatusBar,
   Keyboard,
   TouchableWithoutFeedback,
-  ActivityIndicator,
   Animated,
-  Modal,
+  TouchableOpacity, // Added TouchableOpacity import
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../context/ThemeContext";
 import {
   searchDictionary,
@@ -28,6 +21,22 @@ import {
 } from "../utils/dictionary";
 import { useFavorites } from "../context/FavoritesContext";
 import { addToHistory } from "../utils/historyUtils";
+
+// Components
+import DictionaryHeader from "../components/dictionary/DictionaryHeader";
+import BottomNavigation from "../components/dictionary/BottomNavigation";
+import SearchTab from "../components/dictionary/SearchTab";
+import FavoritesTab from "../components/dictionary/FavoritesTab";
+import AddWordTab from "../components/dictionary/AddWordTab";
+import VoiceSearchTab from "../components/dictionary/VoiceSearchTab";
+import AudioTab from "../components/dictionary/AudioTab";
+import MoreOptionsTab from "../components/dictionary/MoreOptionsTab";
+import VoiceSearchModal from "../components/dictionary/VoiceSearchModal";
+import AddWordModal from "../components/dictionary/AddWordModal";
+import MoreOptionsModal from "../components/dictionary/MoreOptionsModal";
+import LoadingOverlay from "../components/common/LoadingOverlay";
+import { Ionicons } from "@expo/vector-icons"; // Added Ionicons import
+import { Text } from "react-native";
 
 type WordItemProps = {
   item: DictionaryEntry;
@@ -170,12 +179,12 @@ const WordItem = ({
             style={styles.pronounceButton}
             onPress={onPronounce}
           >
-            <LinearGradient
+            {/* <LinearGradient
               colors={themeColors?.headerBackground || ["#00a0a0", "#008080"]}
               style={styles.pronounceGradient}
             >
               <Ionicons name="volume-medium-outline" size={18} color="white" />
-            </LinearGradient>
+            </LinearGradient> */}
           </TouchableOpacity>
           <View style={styles.chevronContainer}>
             <Ionicons name="chevron-forward" size={20} color={primaryColor} />
@@ -190,6 +199,8 @@ export default function DictionaryScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const { colors } = useTheme();
   const { favorites, isFavorite, toggleFavorite } = useFavorites();
+
+  // State
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -207,35 +218,72 @@ export default function DictionaryScreen() {
     pronunciation: "",
   });
   const [dynamicSuggestions, setDynamicSuggestions] = useState<string[]>([]);
-  const searchInputRef = useRef<TextInput>(null);
 
-  // Animation for mic pulse
+  // Refs
+  const searchInputRef = useRef(null);
   const micScale = useRef(new Animated.Value(1)).current;
   const micPulse = useRef<Animated.CompositeAnimation | null>(null);
 
   // Load recent searches on component mount
   useEffect(() => {
-    const loadRecentSearches = async () => {
-      try {
-        const savedSearches = await AsyncStorage.getItem(RECENT_SEARCHES_KEY);
-        if (savedSearches) {
-          setRecentSearches(JSON.parse(savedSearches));
-          // Generate dynamic suggestions based on recent searches
-          generateDynamicSuggestions(JSON.parse(savedSearches));
-        } else {
-          // If no recent searches, use default suggestions
-          generateDefaultSuggestions();
-        }
-      } catch (error) {
-        console.error("Échec du chargement des recherches récentes", error);
-        generateDefaultSuggestions();
-      }
-    };
-
     loadRecentSearches();
   }, []);
 
-  // Generate dynamic suggestions based on recent searches and dictionary data
+  // Start mic pulse animation
+  useEffect(() => {
+    if (isRecording) {
+      startMicAnimation();
+    } else {
+      stopMicAnimation();
+    }
+
+    return () => {
+      if (micPulse.current) {
+        micPulse.current.stop();
+      }
+    };
+  }, [isRecording]);
+
+  const loadRecentSearches = async () => {
+    try {
+      const savedSearches = await AsyncStorage.getItem(RECENT_SEARCHES_KEY);
+      if (savedSearches) {
+        setRecentSearches(JSON.parse(savedSearches));
+        generateDynamicSuggestions(JSON.parse(savedSearches));
+      } else {
+        generateDefaultSuggestions();
+      }
+    } catch (error) {
+      console.error("Échec du chargement des recherches récentes", error);
+      generateDefaultSuggestions();
+    }
+  };
+
+  const startMicAnimation = () => {
+    micPulse.current = Animated.loop(
+      Animated.sequence([
+        Animated.timing(micScale, {
+          toValue: 1.2,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(micScale, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    micPulse.current.start();
+  };
+
+  const stopMicAnimation = () => {
+    if (micPulse.current) {
+      micPulse.current.stop();
+    }
+    micScale.setValue(1);
+  };
+
   const generateDynamicSuggestions = (
     searches: { term: string; timestamp: number; language: string }[]
   ) => {
@@ -267,7 +315,6 @@ export default function DictionaryScreen() {
     setDynamicSuggestions(suggestions);
   };
 
-  // Generate default suggestions if no recent searches
   const generateDefaultSuggestions = () => {
     const allEntries = getAllDictionaryEntries();
 
@@ -289,39 +336,6 @@ export default function DictionaryScreen() {
     setDynamicSuggestions(shuffled.slice(0, MAX_SUGGESTIONS));
   };
 
-  // Start mic pulse animation
-  useEffect(() => {
-    if (isRecording) {
-      micPulse.current = Animated.loop(
-        Animated.sequence([
-          Animated.timing(micScale, {
-            toValue: 1.2,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-          Animated.timing(micScale, {
-            toValue: 1,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-        ])
-      );
-      micPulse.current.start();
-    } else {
-      if (micPulse.current) {
-        micPulse.current.stop();
-      }
-      micScale.setValue(1);
-    }
-
-    return () => {
-      if (micPulse.current) {
-        micPulse.current.stop();
-      }
-    };
-  }, [isRecording]);
-
-  // Determine if a search term is likely French or Moussey
   const detectLanguage = (term: string): string => {
     // Simple heuristic: check if the term appears in French dictionary entries
     const allEntries = getAllDictionaryEntries();
@@ -334,7 +348,6 @@ export default function DictionaryScreen() {
     return frenchMatches.length > 0 ? "french" : "moussey";
   };
 
-  // Save a search term to recent searches
   const saveToRecentSearches = async (term: string) => {
     if (!term.trim()) return;
 
@@ -370,7 +383,6 @@ export default function DictionaryScreen() {
     }
   };
 
-  // Clear recent searches
   const clearRecentSearches = async () => {
     try {
       setRecentSearches([]);
@@ -393,7 +405,7 @@ export default function DictionaryScreen() {
           suggestion.toLowerCase().includes(searchQuery.toLowerCase())
         );
 
-  // Handle suggestion selection
+  // Handlers
   const handleSelectSuggestion = (suggestion: string) => {
     setSearchQuery(suggestion);
     setShowSuggestions(false);
@@ -401,7 +413,6 @@ export default function DictionaryScreen() {
     Keyboard.dismiss();
   };
 
-  // Handle recent search selection
   const handleSelectRecentSearch = (term: string) => {
     setSearchQuery(term);
     setShowSuggestions(false);
@@ -409,7 +420,6 @@ export default function DictionaryScreen() {
     Keyboard.dismiss();
   };
 
-  // Handle word selection
   const handleSelectWord = (word: DictionaryEntry) => {
     // Save the appropriate term based on word type
     const searchTerm = word.id.startsWith("f2m_") ? word.french : word.moussey;
@@ -426,7 +436,6 @@ export default function DictionaryScreen() {
     navigation.navigate("WordDetail", { word });
   };
 
-  // Handle word pronunciation
   const handlePronounceWord = () => {
     // In a real app, this would play audio
     setIsLoading(true);
@@ -435,24 +444,23 @@ export default function DictionaryScreen() {
     }, 1000);
   };
 
-  // Handle toggle favorite
   const handleToggleFavorite = async (id: string) => {
     await toggleFavorite(id);
   };
 
-  // Clear search
   const handleClearSearch = () => {
     setSearchQuery("");
     setShowSuggestions(true);
-    searchInputRef.current?.focus();
+    if (searchInputRef.current) {
+      // @ts-ignore
+      searchInputRef.current.focus();
+    }
   };
 
-  // Handle mic button press
   const handleMicPress = () => {
     setShowMicModal(true);
   };
 
-  // Toggle recording state
   const toggleRecording = () => {
     setIsRecording(!isRecording);
     if (isRecording) {
@@ -465,17 +473,6 @@ export default function DictionaryScreen() {
     }
   };
 
-  // Handle add word button press
-  const handleAddWordPress = () => {
-    setShowAddWordModal(true);
-  };
-
-  // Handle more options button press
-  const handleMoreOptionsPress = () => {
-    setShowMoreOptions(true);
-  };
-
-  // Handle add new word
   const handleAddNewWord = async () => {
     if (!newWord.moussey.trim() || !newWord.french.trim()) {
       // Show error
@@ -488,568 +485,59 @@ export default function DictionaryScreen() {
     setNewWord({ moussey: "", french: "", pronunciation: "" });
   };
 
-  // Use theme colors or fallback to original colors
-  const headerColors: [string, string, ...string[]] = (
-    colors?.headerBackground?.length >= 2
-      ? colors.headerBackground
-      : ["#00a0a0", "#008080"]
-  ) as [string, string, ...string[]];
-  const primaryColor = colors?.primary || "#008080";
+  // Theme colors
   const backgroundColor = colors?.background || "#f5f5f5";
-  const cardColor = colors?.card || "white";
-  const textColor = colors?.text || "#333";
-  const inactiveColor = colors?.inactive || "#999";
-  const borderColor = colors?.border || "#e0e0e0";
 
-  // Render content based on active tab
+  // Render active tab content
   const renderContent = () => {
     switch (activeTab) {
       case "search":
         return (
-          <>
-            {showSuggestions && searchQuery.trim() === "" ? (
-              // Show recent searches and suggestions when search is empty
-              <View
-                style={[
-                  styles.suggestionsContainer,
-                  { backgroundColor: cardColor },
-                ]}
-              >
-                {recentSearches.length > 0 && (
-                  <View>
-                    <View
-                      style={[
-                        styles.sectionHeader,
-                        { backgroundColor: colors?.border || "#f9f9f9" },
-                      ]}
-                    >
-                      <Text style={[styles.sectionTitle, { color: textColor }]}>
-                        Recherches Récentes
-                      </Text>
-                      <TouchableOpacity onPress={clearRecentSearches}>
-                        <Text
-                          style={[styles.clearText, { color: primaryColor }]}
-                        >
-                          Effacer
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                    <FlatList
-                      data={recentSearches}
-                      keyExtractor={(item, index) => `recent-${index}`}
-                      renderItem={({ item }) => (
-                        <TouchableOpacity
-                          style={[
-                            styles.suggestionItem,
-                            { borderTopColor: borderColor },
-                          ]}
-                          onPress={() => handleSelectRecentSearch(item.term)}
-                        >
-                          <Ionicons
-                            name="time-outline"
-                            size={18}
-                            color={inactiveColor}
-                            style={styles.suggestionIcon}
-                          />
-                          <View style={styles.suggestionContent}>
-                            <Text
-                              style={[
-                                styles.suggestionText,
-                                { color: textColor },
-                              ]}
-                            >
-                              {item.term}
-                            </Text>
-                            <Text
-                              style={[
-                                styles.suggestionLanguage,
-                                { color: inactiveColor },
-                              ]}
-                            >
-                              {item.language === "french"
-                                ? "Français"
-                                : "Moussey"}
-                            </Text>
-                          </View>
-                        </TouchableOpacity>
-                      )}
-                      scrollEnabled={false}
-                    />
-                  </View>
-                )}
-
-                <View
-                  style={[
-                    styles.sectionHeader,
-                    { backgroundColor: colors?.border || "#f9f9f9" },
-                  ]}
-                >
-                  <Text style={[styles.sectionTitle, { color: textColor }]}>
-                    Suggestions
-                  </Text>
-                </View>
-                <FlatList
-                  data={filteredSuggestions}
-                  keyExtractor={(item) => `suggestion-${item}`}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={[
-                        styles.suggestionItem,
-                        { borderTopColor: borderColor },
-                      ]}
-                      onPress={() => handleSelectSuggestion(item)}
-                    >
-                      <Ionicons
-                        name="search-outline"
-                        size={18}
-                        color={inactiveColor}
-                        style={styles.suggestionIcon}
-                      />
-                      <Text
-                        style={[styles.suggestionText, { color: textColor }]}
-                      >
-                        {item}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                  scrollEnabled={false}
-                />
-              </View>
-            ) : showSuggestions &&
-              filteredSuggestions.length > 0 &&
-              searchQuery.trim() !== "" ? (
-              // Show filtered suggestions when typing
-              <View
-                style={[
-                  styles.suggestionsContainer,
-                  { backgroundColor: cardColor },
-                ]}
-              >
-                <FlatList
-                  data={filteredSuggestions}
-                  keyExtractor={(item) => `suggestion-${item}`}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={[
-                        styles.suggestionItem,
-                        { borderTopColor: borderColor },
-                      ]}
-                      onPress={() => handleSelectSuggestion(item)}
-                    >
-                      <Ionicons
-                        name="search-outline"
-                        size={18}
-                        color={inactiveColor}
-                        style={styles.suggestionIcon}
-                      />
-                      <Text
-                        style={[styles.suggestionText, { color: textColor }]}
-                      >
-                        {item}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                />
-              </View>
-            ) : (
-              // Show search results
-              <>
-                {searchQuery.trim() !== "" && (
-                  <View
-                    style={[
-                      styles.resultsHeader,
-                      {
-                        backgroundColor: colors?.border || "#f9f9f9",
-                        borderBottomColor: borderColor,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[styles.resultsCount, { color: inactiveColor }]}
-                    >
-                      {filteredWords.length}{" "}
-                      {filteredWords.length === 1 ? "résultat" : "résultats"}
-                    </Text>
-                    <TouchableOpacity onPress={handleClearSearch}>
-                      <Text
-                        style={[
-                          styles.clearSearchText,
-                          { color: primaryColor },
-                        ]}
-                      >
-                        Effacer la recherche
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-                <FlatList
-                  data={filteredWords}
-                  keyExtractor={(item) => item.id}
-                  renderItem={({ item }) => (
-                    <WordItem
-                      item={item}
-                      onPress={() => handleSelectWord(item)}
-                      onPronounce={handlePronounceWord}
-                      onToggleFavorite={() => handleToggleFavorite(item.id)}
-                      isFavorite={isFavorite(item.id)}
-                      highlightText={searchQuery}
-                      themeColors={colors}
-                    />
-                  )}
-                  ListEmptyComponent={
-                    searchQuery.trim() !== "" ? (
-                      <View style={styles.emptyContainer}>
-                        <Ionicons
-                          name="search-outline"
-                          size={50}
-                          color={inactiveColor}
-                        />
-                        <Text
-                          style={[styles.emptyText, { color: inactiveColor }]}
-                        >
-                          Aucun mot trouvé
-                        </Text>
-                        <Text
-                          style={[
-                            styles.emptySubtext,
-                            { color: inactiveColor },
-                          ]}
-                        >
-                          Essayez un terme de recherche différent ou parcourez
-                          les suggestions
-                        </Text>
-                        <TouchableOpacity
-                          style={styles.browseButton}
-                          onPress={handleClearSearch}
-                        >
-                          <LinearGradient
-                            colors={headerColors}
-                            style={styles.browseButtonGradient}
-                          >
-                            <Text style={styles.browseButtonText}>
-                              Parcourir les suggestions
-                            </Text>
-                          </LinearGradient>
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <View style={styles.emptyContainer}>
-                        <Ionicons
-                          name="book-outline"
-                          size={50}
-                          color={inactiveColor}
-                        />
-                        <Text style={[styles.emptyText, { color: textColor }]}>
-                          Dictionnaire
-                        </Text>
-                        <Text
-                          style={[
-                            styles.emptySubtext,
-                            { color: inactiveColor },
-                          ]}
-                        >
-                          Recherchez des mots en Moussey ou en Français
-                        </Text>
-                      </View>
-                    )
-                  }
-                />
-              </>
-            )}
-          </>
+          <SearchTab
+            searchQuery={searchQuery}
+            showSuggestions={showSuggestions}
+            recentSearches={recentSearches}
+            filteredSuggestions={filteredSuggestions}
+            filteredWords={filteredWords}
+            colors={colors}
+            onClearRecentSearches={clearRecentSearches}
+            onSelectRecentSearch={handleSelectRecentSearch}
+            onSelectSuggestion={handleSelectSuggestion}
+            onClearSearch={handleClearSearch}
+            onSelectWord={handleSelectWord}
+            onPronounceWord={handlePronounceWord}
+            onToggleFavorite={handleToggleFavorite}
+            isFavorite={isFavorite}
+          />
         );
       case "favorites":
-        return (
-          <View style={styles.tabContentContainer}>
-            <View style={[styles.tabHeader, { backgroundColor: cardColor }]}>
-              <Text style={[styles.tabTitle, { color: textColor }]}>
-                Favoris
-              </Text>
-            </View>
-            <View style={styles.emptyContainer}>
-              <Ionicons name="star" size={50} color={inactiveColor} />
-              <Text style={[styles.emptyText, { color: textColor }]}>
-                Pas encore de favoris
-              </Text>
-              <Text style={[styles.emptySubtext, { color: inactiveColor }]}>
-                Appuyez sur l'icône en forme d'étoile sur n'importe quel mot
-                pour l'ajouter à vos favoris
-              </Text>
-            </View>
-          </View>
-        );
+        return <FavoritesTab colors={colors} />;
       case "add":
         return (
-          <View style={styles.tabContentContainer}>
-            <View style={[styles.tabHeader, { backgroundColor: cardColor }]}>
-              <Text style={[styles.tabTitle, { color: textColor }]}>
-                Ajouter un nouveau mot
-              </Text>
-            </View>
-            <View style={[styles.addWordForm, { backgroundColor: cardColor }]}>
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: textColor }]}>
-                  Mot Moussey
-                </Text>
-                <TextInput
-                  style={[
-                    styles.formInput,
-                    { backgroundColor: backgroundColor, color: textColor },
-                  ]}
-                  placeholder="Entrez le mot en Moussey"
-                  placeholderTextColor={inactiveColor}
-                  value={newWord.moussey}
-                  onChangeText={(text) =>
-                    setNewWord({ ...newWord, moussey: text })
-                  }
-                />
-              </View>
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: textColor }]}>
-                  Traduction Française
-                </Text>
-                <TextInput
-                  style={[
-                    styles.formInput,
-                    { backgroundColor: backgroundColor, color: textColor },
-                  ]}
-                  placeholder="Entrez la traduction française"
-                  placeholderTextColor={inactiveColor}
-                  value={newWord.french}
-                  onChangeText={(text) =>
-                    setNewWord({ ...newWord, french: text })
-                  }
-                />
-              </View>
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: textColor }]}>
-                  Prononciation
-                </Text>
-                <TextInput
-                  style={[
-                    styles.formInput,
-                    { backgroundColor: backgroundColor, color: textColor },
-                  ]}
-                  placeholder="Entrez la prononciation"
-                  placeholderTextColor={inactiveColor}
-                  value={newWord.pronunciation}
-                  onChangeText={(text) =>
-                    setNewWord({ ...newWord, pronunciation: text })
-                  }
-                />
-              </View>
-              <TouchableOpacity
-                style={[styles.submitButton, { backgroundColor: primaryColor }]}
-                onPress={handleAddNewWord}
-              >
-                <Text style={styles.submitButtonText}>Ajouter le mot</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          <AddWordTab
+            colors={colors}
+            newWord={newWord}
+            setNewWord={setNewWord}
+            onAddWord={handleAddNewWord}
+          />
         );
       case "mic":
         return (
-          <View style={styles.tabContentContainer}>
-            <View style={[styles.tabHeader, { backgroundColor: cardColor }]}>
-              <Text style={[styles.tabTitle, { color: textColor }]}>
-                Recherche vocale
-              </Text>
-            </View>
-            <View style={styles.micContainer}>
-              <Text style={[styles.micInstructions, { color: textColor }]}>
-                Appuyez sur le microphone et prononcez un mot à rechercher
-              </Text>
-              <TouchableOpacity
-                style={[styles.micButton, { backgroundColor: primaryColor }]}
-                onPress={toggleRecording}
-              >
-                <Ionicons name="mic" size={40} color="white" />
-              </TouchableOpacity>
-              <Text style={[styles.micStatus, { color: inactiveColor }]}>
-                {isRecording ? "Écoute en cours..." : "Appuyez pour commencer"}
-              </Text>
-            </View>
-          </View>
+          <VoiceSearchTab
+            colors={colors}
+            isRecording={isRecording}
+            onToggleRecording={toggleRecording}
+          />
         );
       case "audio":
         return (
-          <View style={styles.tabContentContainer}>
-            <View style={[styles.tabHeader, { backgroundColor: cardColor }]}>
-              <Text style={[styles.tabTitle, { color: textColor }]}>
-                Dictionnaire Audio
-              </Text>
-            </View>
-            <View style={styles.audioListContainer}>
-              <Text style={[styles.audioSectionTitle, { color: textColor }]}>
-                Récemment écoutés
-              </Text>
-              <FlatList
-                data={getAllDictionaryEntries().slice(0, 5)}
-                keyExtractor={(item) => `audio-${item.id}`}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={[styles.audioItem, { backgroundColor: cardColor }]}
-                  >
-                    <View style={styles.audioItemContent}>
-                      <Text
-                        style={[styles.audioItemTitle, { color: textColor }]}
-                      >
-                        {item.id.startsWith("f2m_")
-                          ? item.french
-                          : item.moussey}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.audioItemSubtitle,
-                          { color: inactiveColor },
-                        ]}
-                      >
-                        {item.id.startsWith("f2m_")
-                          ? item.moussey
-                          : item.french}
-                      </Text>
-                    </View>
-                    <TouchableOpacity
-                      style={[
-                        styles.audioPlayButton,
-                        { backgroundColor: primaryColor },
-                      ]}
-                    >
-                      <Ionicons name="play" size={16} color="white" />
-                    </TouchableOpacity>
-                  </TouchableOpacity>
-                )}
-              />
-            </View>
-          </View>
+          <AudioTab
+            colors={colors}
+            entries={getAllDictionaryEntries().slice(0, 5)}
+          />
         );
       case "more":
-        return (
-          <View style={styles.tabContentContainer}>
-            <View style={[styles.tabHeader, { backgroundColor: cardColor }]}>
-              <Text style={[styles.tabTitle, { color: textColor }]}>
-                Plus d'options
-              </Text>
-            </View>
-            <View style={styles.moreOptionsContainer}>
-              <TouchableOpacity
-                style={[styles.moreOption, { backgroundColor: cardColor }]}
-              >
-                <Ionicons
-                  name="download-outline"
-                  size={24}
-                  color={primaryColor}
-                  style={styles.moreOptionIcon}
-                />
-                <View style={styles.moreOptionContent}>
-                  <Text style={[styles.moreOptionTitle, { color: textColor }]}>
-                    Télécharger le dictionnaire
-                  </Text>
-                  <Text
-                    style={[
-                      styles.moreOptionDescription,
-                      { color: inactiveColor },
-                    ]}
-                  >
-                    Utiliser le dictionnaire hors ligne
-                  </Text>
-                </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={20}
-                  color={inactiveColor}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.moreOption, { backgroundColor: cardColor }]}
-              >
-                <Ionicons
-                  name="settings-outline"
-                  size={24}
-                  color={primaryColor}
-                  style={styles.moreOptionIcon}
-                />
-                <View style={styles.moreOptionContent}>
-                  <Text style={[styles.moreOptionTitle, { color: textColor }]}>
-                    Paramètres
-                  </Text>
-                  <Text
-                    style={[
-                      styles.moreOptionDescription,
-                      { color: inactiveColor },
-                    ]}
-                  >
-                    Personnaliser votre dictionnaire
-                  </Text>
-                </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={20}
-                  color={inactiveColor}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.moreOption, { backgroundColor: cardColor }]}
-              >
-                <Ionicons
-                  name="help-circle-outline"
-                  size={24}
-                  color={primaryColor}
-                  style={styles.moreOptionIcon}
-                />
-                <View style={styles.moreOptionContent}>
-                  <Text style={[styles.moreOptionTitle, { color: textColor }]}>
-                    Aide & Commentaires
-                  </Text>
-                  <Text
-                    style={[
-                      styles.moreOptionDescription,
-                      { color: inactiveColor },
-                    ]}
-                  >
-                    Obtenir de l'aide ou envoyer des commentaires
-                  </Text>
-                </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={20}
-                  color={inactiveColor}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.moreOption, { backgroundColor: cardColor }]}
-              >
-                <Ionicons
-                  name="information-circle-outline"
-                  size={24}
-                  color={primaryColor}
-                  style={styles.moreOptionIcon}
-                />
-                <View style={styles.moreOptionContent}>
-                  <Text style={[styles.moreOptionTitle, { color: textColor }]}>
-                    À propos
-                  </Text>
-                  <Text
-                    style={[
-                      styles.moreOptionDescription,
-                      { color: inactiveColor },
-                    ]}
-                  >
-                    Version et informations sur l'application
-                  </Text>
-                </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={20}
-                  color={inactiveColor}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-        );
+        return <MoreOptionsTab colors={colors} />;
       default:
         return null;
     }
@@ -1057,469 +545,79 @@ export default function DictionaryScreen() {
 
   return (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-      <View style={[styles.container, { backgroundColor: backgroundColor }]}>
-        <StatusBar backgroundColor={primaryColor} barStyle="light-content" />
+      <View style={[styles.container, { backgroundColor }]}>
+        <StatusBar
+          backgroundColor={colors?.primary || "#008080"}
+          barStyle="light-content"
+        />
 
-        {/* Search header */}
-        <LinearGradient colors={headerColors} style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-          <View
-            style={[styles.searchContainer, { backgroundColor: cardColor }]}
-          >
-            <TextInput
-              ref={searchInputRef}
-              style={[styles.searchInput, { color: textColor }]}
-              placeholder="rechercher..."
-              placeholderTextColor={inactiveColor}
-              value={searchQuery}
-              onChangeText={(text) => {
-                setSearchQuery(text);
-                setShowSuggestions(true);
-              }}
-              onFocus={() => {
-                setShowSuggestions(true);
-                setActiveTab("search");
-              }}
-              returnKeyType="search"
-              onSubmitEditing={() => {
-                if (searchQuery.trim()) {
-                  saveToRecentSearches(searchQuery);
-                  setShowSuggestions(false);
-                }
-              }}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity
-                style={styles.clearButton}
-                onPress={() => setSearchQuery("")}
-              >
-                <Ionicons name="close-circle" size={18} color={inactiveColor} />
-              </TouchableOpacity>
-            )}
-          </View>
-          <TouchableOpacity
-            onPress={handleMicPress}
-            style={styles.micSearchButton}
-          >
-            <Ionicons name="mic-outline" size={24} color="white" />
-          </TouchableOpacity>
-        </LinearGradient>
+        {/* Header with search */}
+        <DictionaryHeader
+          colors={colors}
+          searchQuery={searchQuery}
+          searchInputRef={searchInputRef}
+          onSearchChange={(text) => {
+            setSearchQuery(text);
+            setShowSuggestions(true);
+          }}
+          onSearchFocus={() => {
+            setShowSuggestions(true);
+            setActiveTab("search");
+          }}
+          onSearchSubmit={() => {
+            if (searchQuery.trim()) {
+              saveToRecentSearches(searchQuery);
+              setShowSuggestions(false);
+            }
+          }}
+          onClearSearch={() => setSearchQuery("")}
+          onMicPress={handleMicPress}
+          onBackPress={() => navigation.goBack()}
+        />
 
         {/* Content area */}
-        <View style={[styles.content, { backgroundColor: backgroundColor }]}>
+        <View style={[styles.content, { backgroundColor }]}>
           {renderContent()}
         </View>
 
         {/* Bottom navigation */}
-        <View
-          style={[
-            styles.bottomNav,
-            { backgroundColor: cardColor, borderTopColor: borderColor },
-          ]}
-        >
-          <TouchableOpacity
-            style={styles.navButton}
-            onPress={() => setActiveTab("favorites")}
-          >
-            <View style={styles.navIconContainer}>
-              <Ionicons
-                name={activeTab === "favorites" ? "star" : "star-outline"}
-                size={24}
-                color={activeTab === "favorites" ? primaryColor : inactiveColor}
-              />
-              {activeTab === "favorites" && (
-                <View
-                  style={[
-                    styles.activeIndicator,
-                    { backgroundColor: primaryColor },
-                  ]}
-                />
-              )}
-            </View>
-            <Text
-              style={[
-                styles.navLabel,
-                {
-                  color:
-                    activeTab === "favorites" ? primaryColor : inactiveColor,
-                },
-              ]}
-            >
-              Favoris
-            </Text>
-          </TouchableOpacity>
+        <BottomNavigation
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          colors={colors}
+        />
 
-          <TouchableOpacity
-            style={styles.navButton}
-            onPress={() => setActiveTab("add")}
-          >
-            <View style={styles.navIconContainer}>
-              <Ionicons
-                name={activeTab === "add" ? "add-circle" : "add-circle-outline"}
-                size={24}
-                color={activeTab === "add" ? primaryColor : inactiveColor}
-              />
-              {activeTab === "add" && (
-                <View
-                  style={[
-                    styles.activeIndicator,
-                    { backgroundColor: primaryColor },
-                  ]}
-                />
-              )}
-            </View>
-            <Text
-              style={[
-                styles.navLabel,
-                { color: activeTab === "add" ? primaryColor : inactiveColor },
-              ]}
-            >
-              Ajouter
-            </Text>
-          </TouchableOpacity>
+        {/* Modals */}
+        <VoiceSearchModal
+          visible={showMicModal}
+          colors={colors}
+          isRecording={isRecording}
+          micScale={micScale}
+          onToggleRecording={toggleRecording}
+          onClose={() => setShowMicModal(false)}
+        />
 
-          <TouchableOpacity
-            style={styles.navButton}
-            onPress={() => setActiveTab("mic")}
-          >
-            <View style={styles.navIconContainer}>
-              <Ionicons
-                name={activeTab === "mic" ? "mic" : "mic-outline"}
-                size={24}
-                color={activeTab === "mic" ? primaryColor : inactiveColor}
-              />
-              {activeTab === "mic" && (
-                <View
-                  style={[
-                    styles.activeIndicator,
-                    { backgroundColor: primaryColor },
-                  ]}
-                />
-              )}
-            </View>
-            <Text
-              style={[
-                styles.navLabel,
-                { color: activeTab === "mic" ? primaryColor : inactiveColor },
-              ]}
-            >
-              Vocal
-            </Text>
-          </TouchableOpacity>
+        <AddWordModal
+          visible={showAddWordModal}
+          colors={colors}
+          newWord={newWord}
+          onChangeWord={setNewWord}
+          onAddWord={handleAddNewWord}
+          onClose={() => setShowAddWordModal(false)}
+        />
 
-          <TouchableOpacity
-            style={styles.navButton}
-            onPress={() => setActiveTab("audio")}
-          >
-            <View style={styles.navIconContainer}>
-              <Ionicons
-                name={
-                  activeTab === "audio"
-                    ? "volume-high"
-                    : "volume-medium-outline"
-                }
-                size={24}
-                color={activeTab === "audio" ? primaryColor : inactiveColor}
-              />
-              {activeTab === "audio" && (
-                <View
-                  style={[
-                    styles.activeIndicator,
-                    { backgroundColor: primaryColor },
-                  ]}
-                />
-              )}
-            </View>
-            <Text
-              style={[
-                styles.navLabel,
-                { color: activeTab === "audio" ? primaryColor : inactiveColor },
-              ]}
-            >
-              Audio
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.navButton}
-            onPress={() => setActiveTab("search")}
-          >
-            <View style={styles.navIconContainer}>
-              <Ionicons
-                name={activeTab === "search" ? "search" : "search-outline"}
-                size={24}
-                color={activeTab === "search" ? primaryColor : inactiveColor}
-              />
-              {activeTab === "search" && (
-                <View
-                  style={[
-                    styles.activeIndicator,
-                    { backgroundColor: primaryColor },
-                  ]}
-                />
-              )}
-            </View>
-            <Text
-              style={[
-                styles.navLabel,
-                {
-                  color: activeTab === "search" ? primaryColor : inactiveColor,
-                },
-              ]}
-            >
-              Recherche
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.navButton}
-            onPress={() => setActiveTab("more")}
-          >
-            <View style={styles.navIconContainer}>
-              <Ionicons
-                name={activeTab === "more" ? "menu" : "menu-outline"}
-                size={24}
-                color={activeTab === "more" ? primaryColor : inactiveColor}
-              />
-              {activeTab === "more" && (
-                <View
-                  style={[
-                    styles.activeIndicator,
-                    { backgroundColor: primaryColor },
-                  ]}
-                />
-              )}
-            </View>
-            <Text
-              style={[
-                styles.navLabel,
-                { color: activeTab === "more" ? primaryColor : inactiveColor },
-              ]}
-            >
-              Plus
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Voice search modal */}
-        <Modal visible={showMicModal} transparent animationType="fade">
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: cardColor }]}>
-              <Text style={[styles.modalTitle, { color: textColor }]}>
-                Recherche Vocale
-              </Text>
-              <Text style={[styles.modalSubtitle, { color: inactiveColor }]}>
-                Parlez clairement pour rechercher un mot
-              </Text>
-
-              <Animated.View
-                style={[
-                  styles.micButtonLarge,
-                  {
-                    backgroundColor: primaryColor,
-                    transform: [{ scale: micScale }],
-                  },
-                ]}
-              >
-                <TouchableOpacity
-                  style={styles.micButtonInner}
-                  onPress={toggleRecording}
-                >
-                  <Ionicons
-                    name={isRecording ? "stop" : "mic"}
-                    size={40}
-                    color="white"
-                  />
-                </TouchableOpacity>
-              </Animated.View>
-
-              <Text
-                style={[
-                  styles.recordingStatus,
-                  { color: isRecording ? primaryColor : inactiveColor },
-                ]}
-              >
-                {isRecording
-                  ? "Écoute en cours..."
-                  : "Appuyez sur le microphone pour commencer"}
-              </Text>
-
-              <TouchableOpacity
-                style={[styles.modalCloseButton, { borderColor: borderColor }]}
-                onPress={() => setShowMicModal(false)}
-              >
-                <Text style={[styles.modalCloseText, { color: primaryColor }]}>
-                  Annuler
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-
-        {/* Add word modal */}
-        <Modal visible={showAddWordModal} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: cardColor }]}>
-              <Text style={[styles.modalTitle, { color: textColor }]}>
-                Ajouter un nouveau mot
-              </Text>
-
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: textColor }]}>
-                  Mot Moussey
-                </Text>
-                <TextInput
-                  style={[
-                    styles.formInput,
-                    { backgroundColor: backgroundColor, color: textColor },
-                  ]}
-                  placeholder="Entrez le mot en Moussey"
-                  placeholderTextColor={inactiveColor}
-                  value={newWord.moussey}
-                  onChangeText={(text) =>
-                    setNewWord({ ...newWord, moussey: text })
-                  }
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: textColor }]}>
-                  Traduction Française
-                </Text>
-                <TextInput
-                  style={[
-                    styles.formInput,
-                    { backgroundColor: backgroundColor, color: textColor },
-                  ]}
-                  placeholder="Entrez la traduction française"
-                  placeholderTextColor={inactiveColor}
-                  value={newWord.french}
-                  onChangeText={(text) =>
-                    setNewWord({ ...newWord, french: text })
-                  }
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: textColor }]}>
-                  Prononciation
-                </Text>
-                <TextInput
-                  style={[
-                    styles.formInput,
-                    { backgroundColor: backgroundColor, color: textColor },
-                  ]}
-                  placeholder="Entrez la prononciation"
-                  placeholderTextColor={inactiveColor}
-                  value={newWord.pronunciation}
-                  onChangeText={(text) =>
-                    setNewWord({ ...newWord, pronunciation: text })
-                  }
-                />
-              </View>
-
-              <View style={styles.modalActions}>
-                <TouchableOpacity
-                  style={[styles.modalButton, { borderColor: borderColor }]}
-                  onPress={() => setShowAddWordModal(false)}
-                >
-                  <Text
-                    style={[styles.modalButtonText, { color: inactiveColor }]}
-                  >
-                    Annuler
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.modalButton,
-                    { backgroundColor: primaryColor },
-                  ]}
-                  onPress={handleAddNewWord}
-                >
-                  <Text style={styles.modalButtonTextPrimary}>Enregistrer</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
-
-        {/* More options modal */}
-        <Modal visible={showMoreOptions} transparent animationType="fade">
-          <TouchableWithoutFeedback onPress={() => setShowMoreOptions(false)}>
-            <View style={styles.modalOverlay}>
-              <View
-                style={[styles.optionsMenu, { backgroundColor: cardColor }]}
-              >
-                <TouchableOpacity style={styles.optionItem}>
-                  <Ionicons
-                    name="settings-outline"
-                    size={24}
-                    color={primaryColor}
-                    style={styles.optionIcon}
-                  />
-                  <Text style={[styles.optionText, { color: textColor }]}>
-                    Paramètres
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.optionItem}>
-                  <Ionicons
-                    name="download-outline"
-                    size={24}
-                    color={primaryColor}
-                    style={styles.optionIcon}
-                  />
-                  <Text style={[styles.optionText, { color: textColor }]}>
-                    Télécharger le dictionnaire
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.optionItem}>
-                  <Ionicons
-                    name="help-circle-outline"
-                    size={24}
-                    color={primaryColor}
-                    style={styles.optionIcon}
-                  />
-                  <Text style={[styles.optionText, { color: textColor }]}>
-                    Aide
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.optionItem}>
-                  <Ionicons
-                    name="information-circle-outline"
-                    size={24}
-                    color={primaryColor}
-                    style={styles.optionIcon}
-                  />
-                  <Text style={[styles.optionText, { color: textColor }]}>
-                    À propos
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
+        <MoreOptionsModal
+          visible={showMoreOptions}
+          colors={colors}
+          onClose={() => setShowMoreOptions(false)}
+        />
 
         {/* Loading indicator */}
         {isLoading && (
-          <View style={styles.loadingOverlay}>
-            <View
-              style={[styles.loadingContainer, { backgroundColor: cardColor }]}
-            >
-              <ActivityIndicator size="large" color={primaryColor} />
-              <Text style={[styles.loadingText, { color: textColor }]}>
-                Lecture de la prononciation...
-              </Text>
-            </View>
-          </View>
+          <LoadingOverlay
+            colors={colors}
+            message="Lecture de la prononciation..."
+          />
         )}
       </View>
     </TouchableWithoutFeedback>
@@ -1530,6 +628,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
+  },
+  content: {
+    flex: 1,
   },
   header: {
     flexDirection: "row",
@@ -1567,9 +668,6 @@ const styles = StyleSheet.create({
   micSearchButton: {
     padding: 10,
     marginLeft: 5,
-  },
-  content: {
-    flex: 1,
   },
   suggestionsContainer: {
     backgroundColor: "white",
