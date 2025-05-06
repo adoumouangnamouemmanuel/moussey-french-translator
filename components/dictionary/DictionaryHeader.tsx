@@ -1,10 +1,20 @@
 "use client";
 
 import type React from "react";
-import { StyleSheet, View, TextInput, TouchableOpacity } from "react-native";
+import { useRef, useEffect } from "react";
+import {
+  StyleSheet,
+  View,
+  TextInput,
+  TouchableOpacity,
+  Animated,
+  Dimensions,
+  Platform,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "react-native";
+import { BlurView } from "expo-blur";
 
 type DictionaryHeaderProps = {
   colors: any;
@@ -18,6 +28,8 @@ type DictionaryHeaderProps = {
   onBackPress: () => void;
 };
 
+const { width } = Dimensions.get("window");
+
 const DictionaryHeader = ({
   colors,
   searchQuery,
@@ -29,63 +41,204 @@ const DictionaryHeader = ({
   onMicPress,
   onBackPress,
 }: DictionaryHeaderProps) => {
+  // Animation values
+  const searchBarAnim = useRef(new Animated.Value(0)).current;
+  const backButtonAnim = useRef(new Animated.Value(0)).current;
+  const micButtonAnim = useRef(new Animated.Value(0)).current;
+  const headerHeightAnim = useRef(new Animated.Value(0)).current;
+
+  // Run animations on mount
+  useEffect(() => {
+    Animated.stagger(150, [
+      Animated.spring(headerHeightAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: false,
+      }),
+      Animated.spring(backButtonAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.spring(searchBarAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.spring(micButtonAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
   // Theme colors
-  const headerColors = (
-    colors?.headerBackground?.length >= 2
+  const headerColors =
+    colors?.headerBackground && colors.headerBackground.length >= 2
       ? colors.headerBackground
-      : ["#00a0a0", "#008080"]
-  ) as [string, string, ...string[]];
+      : ["#00a0a0", "#008080"];
   const cardColor = colors?.card || "white";
   const textColor = colors?.text || "#333";
   const inactiveColor = colors?.inactive || "#999";
 
+  // Interpolated header height
+  const headerHeight = headerHeightAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [70, 90],
+  });
+
   return (
-    <LinearGradient colors={headerColors} style={styles.header}>
-      <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={24} color="white" />
-      </TouchableOpacity>
-      <View style={[styles.searchContainer, { backgroundColor: cardColor }]}>
-        <TextInput
-          ref={searchInputRef}
-          style={[styles.searchInput, { color: textColor }]}
-          placeholder="rechercher..."
-          placeholderTextColor={inactiveColor}
-          value={searchQuery}
-          onChangeText={onSearchChange}
-          onFocus={onSearchFocus}
-          returnKeyType="search"
-          onSubmitEditing={onSearchSubmit}
+    <Animated.View style={{ height: headerHeight }}>
+      <LinearGradient colors={headerColors} style={styles.headerGradient}>
+        <View
+          style={[styles.blurOverlay, { backgroundColor: "rgba(0,0,0,0.1)" }]}
         />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity style={styles.clearButton} onPress={onClearSearch}>
-            <Ionicons name="close-circle" size={18} color={inactiveColor} />
-          </TouchableOpacity>
-        )}
-      </View>
-      <TouchableOpacity onPress={onMicPress} style={styles.micSearchButton}>
-        <Ionicons name="mic-outline" size={24} color="white" />
-      </TouchableOpacity>
-    </LinearGradient>
+        <View style={styles.headerContent}>
+          <Animated.View
+            style={[
+              styles.backButtonContainer,
+              {
+                opacity: backButtonAnim,
+                transform: [
+                  {
+                    translateX: backButtonAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-20, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color="white" />
+            </TouchableOpacity>
+          </Animated.View>
+
+          <Animated.View
+            style={[
+              styles.searchContainerWrapper,
+              {
+                opacity: searchBarAnim,
+                transform: [
+                  {
+                    translateY: searchBarAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [10, 0],
+                    }),
+                  },
+                  {
+                    scale: searchBarAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.9, 1],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <View
+              style={[styles.searchContainer, { backgroundColor: cardColor }]}
+            >
+              <Ionicons
+                name="search"
+                size={20}
+                color={inactiveColor}
+                style={styles.searchIcon}
+              />
+              <TextInput
+                ref={searchInputRef}
+                style={[styles.searchInput, { color: textColor }]}
+                placeholder="Rechercher un mot..."
+                placeholderTextColor={inactiveColor}
+                value={searchQuery}
+                onChangeText={onSearchChange}
+                onFocus={onSearchFocus}
+                returnKeyType="search"
+                onSubmitEditing={onSearchSubmit}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity
+                  style={styles.clearButton}
+                  onPress={onClearSearch}
+                >
+                  <Ionicons
+                    name="close-circle"
+                    size={18}
+                    color={inactiveColor}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+          </Animated.View>
+
+          <Animated.View
+            style={[
+              styles.micButtonContainer,
+              {
+                opacity: micButtonAnim,
+                transform: [
+                  {
+                    translateX: micButtonAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [20, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <TouchableOpacity
+              onPress={onMicPress}
+              style={styles.micSearchButton}
+            >
+              <View style={styles.micIconContainer}>
+                <Ionicons name="mic-outline" size={22} color="white" />
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </LinearGradient>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
-  header: {
+  headerGradient: {
+    flex: 1,
+    position: "relative",
+    overflow: "hidden",
+  },
+  blurOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.3,
+  },
+  headerContent: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
-    paddingTop: StatusBar.currentHeight || 10,
+    paddingHorizontal: 12,
+    paddingTop: Platform.OS === "ios" ? 40 : StatusBar.currentHeight || 10,
+  },
+  backButtonContainer: {
+    marginRight: 8,
   },
   backButton: {
-    padding: 5,
-    marginRight: 5,
+    padding: 8,
+    borderRadius: 20,
+  },
+  searchContainerWrapper: {
+    flex: 1,
   },
   searchContainer: {
-    flex: 1,
     backgroundColor: "white",
-    borderRadius: 8,
-    height: 40,
-    justifyContent: "center",
+    borderRadius: 12,
+    height: 44,
     flexDirection: "row",
     alignItems: "center",
     shadowColor: "#000",
@@ -93,19 +246,37 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 3,
+    paddingHorizontal: 10,
+  },
+  searchIcon: {
+    marginLeft: 6,
   },
   searchInput: {
     flex: 1,
     paddingHorizontal: 10,
     fontSize: 16,
     color: "#333",
+    height: "100%",
   },
   clearButton: {
     padding: 8,
   },
+  micButtonContainer: {
+    marginLeft: 8,
+  },
   micSearchButton: {
-    padding: 10,
-    marginLeft: 5,
+    padding: 8,
+    borderRadius: 20,
+  },
+  micIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
   },
 });
 
