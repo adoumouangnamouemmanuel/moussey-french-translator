@@ -213,6 +213,8 @@ const styles = StyleSheet.create({
     flex: 1,
     position: "relative",
     overflow: "hidden",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   blurOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -223,7 +225,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
-    paddingTop: Platform.OS === "ios" ? 40 : StatusBar.currentHeight || 10,
+    paddingTop: Platform.OS === "ios" ? 45 : StatusBar.currentHeight || 10,
   },
   backButtonContainer: {
     marginRight: 8,
