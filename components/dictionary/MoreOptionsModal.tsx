@@ -1,3 +1,4 @@
+"use client";
 import {
   StyleSheet,
   View,
@@ -22,32 +23,68 @@ const MoreOptionsModal = ({
   const cardColor = colors?.card || "white";
   const textColor = colors?.text || "#333";
   const primaryColor = colors?.primary || "#008080";
-
-  const options: { icon: "settings-outline" | "download-outline" | "help-circle-outline" | "information-circle-outline"; label: string }[] = [
-    { icon: "settings-outline", label: "Paramètres" },
-    { icon: "download-outline", label: "Télécharger le dictionnaire" },
-    { icon: "help-circle-outline", label: "Aide" },
-    { icon: "information-circle-outline", label: "À propos" },
-  ];
+  const borderColor = colors?.border || "#e0e0e0";
 
   return (
     <Modal visible={visible} transparent animationType="fade">
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.modalOverlay}>
           <View style={[styles.optionsMenu, { backgroundColor: cardColor }]}>
-            {options.map((option, index) => (
-              <TouchableOpacity key={index} style={styles.optionItem}>
-                <Ionicons
-                  name={option.icon}
-                  size={24}
-                  color={primaryColor}
-                  style={styles.optionIcon}
-                />
-                <Text style={[styles.optionText, { color: textColor }]}>
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            <TouchableOpacity
+              style={[styles.optionItem, { borderBottomColor: borderColor }]}
+            >
+              <Ionicons
+                name="settings-outline"
+                size={24}
+                color={primaryColor}
+                style={styles.optionIcon}
+              />
+              <Text style={[styles.optionText, { color: textColor }]}>
+                Paramètres
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.optionItem, { borderBottomColor: borderColor }]}
+            >
+              <Ionicons
+                name="download-outline"
+                size={24}
+                color={primaryColor}
+                style={styles.optionIcon}
+              />
+              <Text style={[styles.optionText, { color: textColor }]}>
+                Télécharger le dictionnaire
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.optionItem, { borderBottomColor: borderColor }]}
+            >
+              <Ionicons
+                name="help-circle-outline"
+                size={24}
+                color={primaryColor}
+                style={styles.optionIcon}
+              />
+              <Text style={[styles.optionText, { color: textColor }]}>
+                Aide
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.optionItem, { borderBottomColor: borderColor }]}
+            >
+              <Ionicons
+                name="information-circle-outline"
+                size={24}
+                color={primaryColor}
+                style={styles.optionIcon}
+              />
+              <Text style={[styles.optionText, { color: textColor }]}>
+                À propos
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </TouchableWithoutFeedback>

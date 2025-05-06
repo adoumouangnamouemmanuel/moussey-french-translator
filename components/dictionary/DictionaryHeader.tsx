@@ -1,15 +1,10 @@
 "use client";
 
+import type React from "react";
+import { StyleSheet, View, TextInput, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import React from "react";
-import {
-  Animated,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { StatusBar } from "react-native";
 
 type DictionaryHeaderProps = {
   colors: any;
@@ -34,19 +29,8 @@ const DictionaryHeader = ({
   onMicPress,
   onBackPress,
 }: DictionaryHeaderProps) => {
-  // Animation for search bar
-  const searchBarAnim = React.useRef(new Animated.Value(0)).current;
-
-  React.useEffect(() => {
-    Animated.timing(searchBarAnim, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  }, []);
-
   // Theme colors
-  const headerColors: [string, string, ...string[]] = (
+  const headerColors = (
     colors?.headerBackground?.length >= 2
       ? colors.headerBackground
       : ["#00a0a0", "#008080"]
@@ -60,56 +44,26 @@ const DictionaryHeader = ({
       <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
         <Ionicons name="arrow-back" size={24} color="white" />
       </TouchableOpacity>
-
-      <Animated.View
-        style={[
-          styles.searchContainerWrapper,
-          {
-            transform: [
-              {
-                translateY: searchBarAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [10, 0],
-                }),
-              },
-              { scale: searchBarAnim },
-            ],
-            opacity: searchBarAnim,
-          },
-        ]}
-      >
-        <View style={[styles.searchContainer, { backgroundColor: cardColor }]}>
-          <TextInput
-            ref={searchInputRef}
-            style={[styles.searchInput, { color: textColor }]}
-            placeholder="Rechercher..."
-            placeholderTextColor={inactiveColor}
-            value={searchQuery}
-            onChangeText={onSearchChange}
-            onFocus={onSearchFocus}
-            returnKeyType="search"
-            onSubmitEditing={onSearchSubmit}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity
-              style={styles.clearButton}
-              onPress={onClearSearch}
-            >
-              <Ionicons name="close-circle" size={18} color={inactiveColor} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </Animated.View>
-
+      <View style={[styles.searchContainer, { backgroundColor: cardColor }]}>
+        <TextInput
+          ref={searchInputRef}
+          style={[styles.searchInput, { color: textColor }]}
+          placeholder="rechercher..."
+          placeholderTextColor={inactiveColor}
+          value={searchQuery}
+          onChangeText={onSearchChange}
+          onFocus={onSearchFocus}
+          returnKeyType="search"
+          onSubmitEditing={onSearchSubmit}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity style={styles.clearButton} onPress={onClearSearch}>
+            <Ionicons name="close-circle" size={18} color={inactiveColor} />
+          </TouchableOpacity>
+        )}
+      </View>
       <TouchableOpacity onPress={onMicPress} style={styles.micSearchButton}>
-        <Animated.View
-          style={{
-            transform: [{ scale: searchBarAnim }],
-            opacity: searchBarAnim,
-          }}
-        >
-          <Ionicons name="mic-outline" size={24} color="white" />
-        </Animated.View>
+        <Ionicons name="mic-outline" size={24} color="white" />
       </TouchableOpacity>
     </LinearGradient>
   );
@@ -120,16 +74,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 10,
-    paddingTop: 40, // Account for status bar
+    paddingTop: StatusBar.currentHeight || 10,
   },
   backButton: {
     padding: 5,
     marginRight: 5,
   },
-  searchContainerWrapper: {
-    flex: 1,
-  },
   searchContainer: {
+    flex: 1,
     backgroundColor: "white",
     borderRadius: 8,
     height: 40,

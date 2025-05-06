@@ -1,3 +1,4 @@
+"use client";
 import {
   StyleSheet,
   View,
@@ -15,7 +16,11 @@ type AddWordModalProps = {
     french: string;
     pronunciation: string;
   };
-  onChangeWord: (word: any) => void;
+  onChangeWord: (word: {
+    moussey: string;
+    french: string;
+    pronunciation: string;
+  }) => void;
   onAddWord: () => void;
   onClose: () => void;
 };
@@ -32,8 +37,8 @@ const AddWordModal = ({
   const textColor = colors?.text || "#333";
   const inactiveColor = colors?.inactive || "#999";
   const primaryColor = colors?.primary || "#008080";
-  const borderColor = colors?.border || "#e0e0e0";
   const backgroundColor = colors?.background || "#f5f5f5";
+  const borderColor = colors?.border || "#e0e0e0";
 
   return (
     <Modal visible={visible} transparent animationType="slide">
@@ -128,7 +133,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContent: {
-    width: "90%",
+    width: "80%",
     padding: 20,
     borderRadius: 10,
     alignItems: "center",
@@ -139,8 +144,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   formGroup: {
-    width: "100%",
     marginBottom: 15,
+    width: "100%",
   },
   formLabel: {
     fontSize: 16,
@@ -153,6 +158,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     fontSize: 16,
+    width: "100%",
   },
   modalActions: {
     flexDirection: "row",

@@ -1,3 +1,4 @@
+"use client";
 import {
   StyleSheet,
   View,
@@ -13,7 +14,11 @@ type AddWordTabProps = {
     french: string;
     pronunciation: string;
   };
-  setNewWord: (word: any) => void;
+  setNewWord: (word: {
+    moussey: string;
+    french: string;
+    pronunciation: string;
+  }) => void;
   onAddWord: () => void;
 };
 

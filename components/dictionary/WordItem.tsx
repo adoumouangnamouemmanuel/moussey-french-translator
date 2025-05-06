@@ -9,8 +9,8 @@ import {
   Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import type { DictionaryEntry } from "../../utils/dictionary";
+import { LinearGradient } from "expo-linear-gradient";
 
 type WordItemProps = {
   item: DictionaryEntry;
@@ -82,6 +82,7 @@ const WordItem = ({
   const textColor = themeColors?.text || "#333";
   const inactiveColor = themeColors?.inactive || "#777";
   const primaryColor = themeColors?.primary || "#008080";
+  const headerColors = themeColors?.headerBackground || ["#00a0a0", "#008080"];
 
   return (
     <TouchableOpacity
@@ -148,7 +149,7 @@ const WordItem = ({
             onPress={onPronounce}
           >
             <LinearGradient
-              colors={themeColors?.headerBackground || ["#00a0a0", "#008080"]}
+              colors={headerColors}
               style={styles.pronounceGradient}
             >
               <Ionicons name="volume-medium-outline" size={18} color="white" />

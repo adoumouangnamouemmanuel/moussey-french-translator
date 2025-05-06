@@ -1,5 +1,6 @@
+"use client";
+import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type MoreOptionsTabProps = {
   colors: any;
@@ -11,37 +12,6 @@ const MoreOptionsTab = ({ colors }: MoreOptionsTabProps) => {
   const inactiveColor = colors?.inactive || "#999";
   const primaryColor = colors?.primary || "#008080";
 
-  const options: {
-    icon:
-      | "download-outline"
-      | "settings-outline"
-      | "help-circle-outline"
-      | "information-circle-outline";
-    title: string;
-    description: string;
-  }[] = [
-    {
-      icon: "download-outline",
-      title: "Télécharger le dictionnaire",
-      description: "Utiliser le dictionnaire hors ligne",
-    },
-    {
-      icon: "settings-outline",
-      title: "Paramètres",
-      description: "Personnaliser votre dictionnaire",
-    },
-    {
-      icon: "help-circle-outline",
-      title: "Aide & Commentaires",
-      description: "Obtenir de l'aide ou envoyer des commentaires",
-    },
-    {
-      icon: "information-circle-outline",
-      title: "À propos",
-      description: "Version et informations sur l'application",
-    },
-  ];
-
   return (
     <View style={styles.tabContentContainer}>
       <View style={[styles.tabHeader, { backgroundColor: cardColor }]}>
@@ -50,30 +20,93 @@ const MoreOptionsTab = ({ colors }: MoreOptionsTabProps) => {
         </Text>
       </View>
       <View style={styles.moreOptionsContainer}>
-        {options.map((option, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[styles.moreOption, { backgroundColor: cardColor }]}
-          >
-            <Ionicons
-              name={option.icon}
-              size={24}
-              color={primaryColor}
-              style={styles.moreOptionIcon}
-            />
-            <View style={styles.moreOptionContent}>
-              <Text style={[styles.moreOptionTitle, { color: textColor }]}>
-                {option.title}
-              </Text>
-              <Text
-                style={[styles.moreOptionDescription, { color: inactiveColor }]}
-              >
-                {option.description}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={inactiveColor} />
-          </TouchableOpacity>
-        ))}
+        <TouchableOpacity
+          style={[styles.moreOption, { backgroundColor: cardColor }]}
+        >
+          <Ionicons
+            name="download-outline"
+            size={24}
+            color={primaryColor}
+            style={styles.moreOptionIcon}
+          />
+          <View style={styles.moreOptionContent}>
+            <Text style={[styles.moreOptionTitle, { color: textColor }]}>
+              Télécharger le dictionnaire
+            </Text>
+            <Text
+              style={[styles.moreOptionDescription, { color: inactiveColor }]}
+            >
+              Utiliser le dictionnaire hors ligne
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={inactiveColor} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.moreOption, { backgroundColor: cardColor }]}
+        >
+          <Ionicons
+            name="settings-outline"
+            size={24}
+            color={primaryColor}
+            style={styles.moreOptionIcon}
+          />
+          <View style={styles.moreOptionContent}>
+            <Text style={[styles.moreOptionTitle, { color: textColor }]}>
+              Paramètres
+            </Text>
+            <Text
+              style={[styles.moreOptionDescription, { color: inactiveColor }]}
+            >
+              Personnaliser votre dictionnaire
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={inactiveColor} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.moreOption, { backgroundColor: cardColor }]}
+        >
+          <Ionicons
+            name="help-circle-outline"
+            size={24}
+            color={primaryColor}
+            style={styles.moreOptionIcon}
+          />
+          <View style={styles.moreOptionContent}>
+            <Text style={[styles.moreOptionTitle, { color: textColor }]}>
+              Aide & Commentaires
+            </Text>
+            <Text
+              style={[styles.moreOptionDescription, { color: inactiveColor }]}
+            >
+              Obtenir de l'aide ou envoyer des commentaires
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={inactiveColor} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.moreOption, { backgroundColor: cardColor }]}
+        >
+          <Ionicons
+            name="information-circle-outline"
+            size={24}
+            color={primaryColor}
+            style={styles.moreOptionIcon}
+          />
+          <View style={styles.moreOptionContent}>
+            <Text style={[styles.moreOptionTitle, { color: textColor }]}>
+              À propos
+            </Text>
+            <Text
+              style={[styles.moreOptionDescription, { color: inactiveColor }]}
+            >
+              Version et informations sur l'application
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={inactiveColor} />
+        </TouchableOpacity>
       </View>
     </View>
   );

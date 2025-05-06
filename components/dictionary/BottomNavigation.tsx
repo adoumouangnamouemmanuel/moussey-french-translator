@@ -1,15 +1,14 @@
 "use client";
 
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import {
-  Animated,
   StyleSheet,
+  View,
   Text,
   TouchableOpacity,
-  View,
+  Animated,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 type BottomNavigationProps = {
   activeTab: string;
@@ -17,111 +16,147 @@ type BottomNavigationProps = {
   colors: any;
 };
 
-type TabItem = {
-  id: string;
-  label: string;
-  activeIcon:
-    | "star"
-    | "star-outline"
-    | "add-circle"
-    | "add-circle-outline"
-    | "mic"
-    | "mic-outline"
-    | "volume-high"
-    | "volume-medium-outline"
-    | "search"
-    | "search-outline"
-    | "menu"
-    | "menu-outline";
-  inactiveIcon:
-    | "star"
-    | "star-outline"
-    | "add-circle"
-    | "add-circle-outline"
-    | "mic"
-    | "mic-outline"
-    | "volume-high"
-    | "volume-medium-outline"
-    | "search"
-    | "search-outline"
-    | "menu"
-    | "menu-outline";
-};
-
-const tabs: TabItem[] = [
-  {
-    id: "favorites",
-    label: "Favoris",
-    activeIcon: "star",
-    inactiveIcon: "star-outline",
-  },
-  {
-    id: "add",
-    label: "Ajouter",
-    activeIcon: "add-circle",
-    inactiveIcon: "add-circle-outline",
-  },
-  { id: "mic", label: "Vocal", activeIcon: "mic", inactiveIcon: "mic-outline" },
-  {
-    id: "audio",
-    label: "Audio",
-    activeIcon: "volume-high",
-    inactiveIcon: "volume-medium-outline",
-  },
-  {
-    id: "search",
-    label: "Recherche",
-    activeIcon: "search",
-    inactiveIcon: "search-outline",
-  },
-  {
-    id: "more",
-    label: "Plus",
-    activeIcon: "menu",
-    inactiveIcon: "menu-outline",
-  },
-];
-
 const BottomNavigation = ({
   activeTab,
   onTabChange,
   colors,
 }: BottomNavigationProps) => {
-  // Animation references for each tab
-  const tabAnimations = React.useRef<{ [key: string]: Animated.Value }>({});
-
-  // Initialize animations if not already done
-  React.useEffect(() => {
-    tabs.forEach((tab) => {
-      if (!tabAnimations.current[tab.id]) {
-        tabAnimations.current[tab.id] = new Animated.Value(
-          tab.id === activeTab ? 1 : 0
-        );
-      }
-    });
-  }, []);
-
-  // Animate tab changes
-  React.useEffect(() => {
-    tabs.forEach((tab) => {
-      Animated.spring(tabAnimations.current[tab.id], {
-        toValue: tab.id === activeTab ? 1 : 0,
-        friction: 8,
-        tension: 50,
-        useNativeDriver: true,
-      }).start();
-    });
-  }, [activeTab]);
-
   // Theme colors
   const cardColor = colors?.card || "white";
-  const textColor = colors?.text || "#333";
-  const inactiveColor = colors?.inactive || "#999";
-  const primaryColor = colors?.primary || "#008080";
   const borderColor = colors?.border || "#e0e0e0";
+  const primaryColor = colors?.primary || "#008080";
+  const inactiveColor = colors?.inactive || "#999";
 
-  // Gradient colors for active icons
-  const iconGradientColors = colors?.headerBackground || ["#00a0a0", "#008080"];
+  // Animation refs for each tab
+  const searchScale = React.useRef(
+    new Animated.Value(activeTab === "search" ? 1.1 : 1)
+  ).current;
+  const favoritesScale = React.useRef(
+    new Animated.Value(activeTab === "favorites" ? 1.1 : 1)
+  ).current;
+  const addScale = React.useRef(
+    new Animated.Value(activeTab === "add" ? 1.1 : 1)
+  ).current;
+  const micScale = React.useRef(
+    new Animated.Value(activeTab === "mic" ? 1.1 : 1)
+  ).current;
+  const audioScale = React.useRef(
+    new Animated.Value(activeTab === "audio" ? 1.1 : 1)
+  ).current;
+  const moreScale = React.useRef(
+    new Animated.Value(activeTab === "more" ? 1.1 : 1)
+  ).current;
+
+  // Handle tab change with animation
+  const handleTabChange = (tab: string) => {
+    // Reset all animations
+    Animated.parallel([
+      Animated.spring(searchScale, {
+        toValue: 1,
+        friction: 5,
+        useNativeDriver: true,
+      }),
+      Animated.spring(favoritesScale, {
+        toValue: 1,
+        friction: 5,
+        useNativeDriver: true,
+      }),
+      Animated.spring(addScale, {
+        toValue: 1,
+        friction: 5,
+        useNativeDriver: true,
+      }),
+      Animated.spring(micScale, {
+        toValue: 1,
+        friction: 5,
+        useNativeDriver: true,
+      }),
+      Animated.spring(audioScale, {
+        toValue: 1,
+        friction: 5,
+        useNativeDriver: true,
+      }),
+      Animated.spring(moreScale, {
+        toValue: 1,
+        friction: 5,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Animate the selected tab
+    const scaleRef =
+      tab === "search"
+        ? searchScale
+        : tab === "favorites"
+        ? favoritesScale
+        : tab === "add"
+        ? addScale
+        : tab === "mic"
+        ? micScale
+        : tab === "audio"
+        ? audioScale
+        : moreScale;
+
+    Animated.spring(scaleRef, {
+      toValue: 1.1,
+      friction: 5,
+      useNativeDriver: true,
+    }).start();
+
+    onTabChange(tab);
+  };
+
+  // Render a tab button with animation
+  const renderTabButton = (
+    tabName: string,
+    activeIcon: keyof typeof Ionicons.glyphMap,
+    inactiveIcon: keyof typeof Ionicons.glyphMap,
+    label: string,
+    scaleAnim: Animated.Value
+  ) => {
+    const isActive = activeTab === tabName;
+
+    return (
+      <TouchableOpacity
+        style={styles.navButton}
+        onPress={() => handleTabChange(tabName)}
+      >
+        <Animated.View
+          style={[
+            styles.navIconContainer,
+            { transform: [{ scale: scaleAnim }] },
+          ]}
+        >
+          <Ionicons
+            name={isActive ? activeIcon : inactiveIcon}
+            size={24}
+            color={isActive ? primaryColor : inactiveColor}
+            style={isActive ? styles.activeIcon : styles.inactiveIcon}
+          />
+          {isActive && (
+            <View
+              style={[
+                styles.activeIndicator,
+                { backgroundColor: primaryColor },
+              ]}
+            />
+          )}
+        </Animated.View>
+        <Text
+          style={[
+            styles.navLabel,
+            {
+              color: isActive ? primaryColor : inactiveColor,
+              fontWeight: isActive ? "600" : "400",
+              opacity: isActive ? 1 : 0.8,
+            },
+          ]}
+        >
+          {label}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View
@@ -130,62 +165,36 @@ const BottomNavigation = ({
         { backgroundColor: cardColor, borderTopColor: borderColor },
       ]}
     >
-      {tabs.map((tab) => {
-        const isActive = activeTab === tab.id;
-        const scale =
-          tabAnimations.current[tab.id]?.interpolate({
-            inputRange: [0, 1],
-            outputRange: [1, 1.15],
-          }) || new Animated.Value(1);
-
-        return (
-          <TouchableOpacity
-            key={tab.id}
-            style={styles.navButton}
-            onPress={() => onTabChange(tab.id)}
-            activeOpacity={0.7}
-          >
-            <Animated.View
-              style={[styles.navIconContainer, { transform: [{ scale }] }]}
-            >
-              {isActive ? (
-                <LinearGradient
-                  colors={iconGradientColors}
-                  style={styles.activeIconGradient}
-                >
-                  <Ionicons name={tab.activeIcon} size={22} color="white" />
-                </LinearGradient>
-              ) : (
-                <Ionicons
-                  name={tab.inactiveIcon}
-                  size={24}
-                  color={inactiveColor}
-                />
-              )}
-
-              {isActive && (
-                <View
-                  style={[
-                    styles.activeIndicator,
-                    { backgroundColor: primaryColor },
-                  ]}
-                />
-              )}
-            </Animated.View>
-            <Text
-              style={[
-                styles.navLabel,
-                {
-                  color: isActive ? primaryColor : inactiveColor,
-                  fontWeight: isActive ? "600" : "400",
-                },
-              ]}
-            >
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
+      {renderTabButton(
+        "favorites",
+        "star",
+        "star-outline",
+        "Favoris",
+        favoritesScale
+      )}
+      {renderTabButton(
+        "add",
+        "add-circle",
+        "add-circle-outline",
+        "Ajouter",
+        addScale
+      )}
+      {renderTabButton("mic", "mic", "mic-outline", "Vocal", micScale)}
+      {renderTabButton(
+        "audio",
+        "volume-high",
+        "volume-medium-outline",
+        "Audio",
+        audioScale
+      )}
+      {renderTabButton(
+        "search",
+        "search",
+        "search-outline",
+        "Recherche",
+        searchScale
+      )}
+      {renderTabButton("more", "menu", "menu-outline", "Plus", moreScale)}
     </View>
   );
 };
@@ -212,19 +221,16 @@ const styles = StyleSheet.create({
   navIconContainer: {
     alignItems: "center",
     justifyContent: "center",
-    height: 32,
+    height: 28,
   },
-  activeIconGradient: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
+  activeIcon: {
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 1.5,
-    elevation: 2,
+  },
+  inactiveIcon: {
+    opacity: 0.7,
   },
   activeIndicator: {
     width: 5,
@@ -235,7 +241,7 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontSize: 12,
-    marginTop: 4,
+    marginTop: 2,
   },
 });
 

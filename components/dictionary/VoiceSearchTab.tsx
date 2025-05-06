@@ -1,4 +1,13 @@
-import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
+"use client";
+
+import React from "react";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  Animated,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 type VoiceSearchTabProps = {
@@ -17,6 +26,34 @@ const VoiceSearchTab = ({
   const inactiveColor = colors?.inactive || "#999";
   const primaryColor = colors?.primary || "#008080";
 
+  // Animation for mic pulse
+  const pulseAnim = React.useRef(new Animated.Value(1)).current;
+
+  React.useEffect(() => {
+    if (isRecording) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.2,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    } else {
+      pulseAnim.setValue(1);
+    }
+
+    return () => {
+      pulseAnim.stopAnimation();
+    };
+  }, [isRecording, pulseAnim]);
+
   return (
     <View style={styles.tabContentContainer}>
       <View style={[styles.tabHeader, { backgroundColor: cardColor }]}>
@@ -28,13 +65,24 @@ const VoiceSearchTab = ({
         <Text style={[styles.micInstructions, { color: textColor }]}>
           Appuyez sur le microphone et prononcez un mot à rechercher
         </Text>
-        <TouchableOpacity
-          style={[styles.micButton, { backgroundColor: primaryColor }]}
-          onPress={onToggleRecording}
+        <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+          <TouchableOpacity
+            style={[styles.micButton, { backgroundColor: primaryColor }]}
+            onPress={onToggleRecording}
+          >
+            <Ionicons
+              name={isRecording ? "stop" : "mic"}
+              size={40}
+              color="white"
+            />
+          </TouchableOpacity>
+        </Animated.View>
+        <Text
+          style={[
+            styles.micStatus,
+            { color: isRecording ? primaryColor : inactiveColor },
+          ]}
         >
-          <Ionicons name="mic" size={40} color="white" />
-        </TouchableOpacity>
-        <Text style={[styles.micStatus, { color: inactiveColor }]}>
           {isRecording ? "Écoute en cours..." : "Appuyez pour commencer"}
         </Text>
       </View>

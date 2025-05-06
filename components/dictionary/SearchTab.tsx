@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import { useEffect, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -47,13 +47,10 @@ const SearchTab = ({
   onToggleFavorite,
   isFavorite,
 }: SearchTabProps) => {
-  // Animation for list items
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  const suggestionItemAnims = React.useRef(new Map()).current;
-  const recentSearchItemAnims = React.useRef(new Map()).current;
-  const wordItemAnims = React.useRef(new Map()).current;
+  // Animation for container
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  React.useEffect(() => {
+  useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 300,
@@ -67,9 +64,8 @@ const SearchTab = ({
   const inactiveColor = colors?.inactive || "#999";
   const primaryColor = colors?.primary || "#008080";
   const borderColor = colors?.border || "#e0e0e0";
-  const headerColors = colors?.headerBackground || ["#00a0a0", "#008080"];
 
-  // Render suggestion item
+  // Render suggestion item with animation
   const renderSuggestionItem = ({
     item,
     index,
@@ -77,34 +73,21 @@ const SearchTab = ({
     item: string;
     index: number;
   }) => {
-    if (!suggestionItemAnims.has(item)) {
-      suggestionItemAnims.set(item, new Animated.Value(0));
-    }
-    const itemAnim = suggestionItemAnims.get(item);
-
-    React.useEffect(() => {
-      Animated.timing(itemAnim, {
-        toValue: 1,
-        duration: 300,
-        delay: index * 50,
-        useNativeDriver: true,
-      }).start();
-    }, [item, index, itemAnim]);
+    // Create a static animation value for each item based on its index
+    const animatedStyle = {
+      opacity: fadeAnim,
+      transform: [
+        {
+          translateY: fadeAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [10 + index * 5, 0],
+          }),
+        },
+      ],
+    };
 
     return (
-      <Animated.View
-        style={{
-          opacity: itemAnim,
-          transform: [
-            {
-              translateY: itemAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [20, 0],
-              }),
-            },
-          ],
-        }}
-      >
+      <Animated.View style={animatedStyle}>
         <TouchableOpacity
           style={[styles.suggestionItem, { borderTopColor: borderColor }]}
           onPress={() => onSelectSuggestion(item)}
@@ -123,7 +106,7 @@ const SearchTab = ({
     );
   };
 
-  // Render recent search item
+  // Render recent search item with animation
   const renderRecentSearchItem = ({
     item,
     index,
@@ -131,35 +114,21 @@ const SearchTab = ({
     item: any;
     index: number;
   }) => {
-    const key = `${item.term}-${item.timestamp}`;
-    if (!recentSearchItemAnims.has(key)) {
-      recentSearchItemAnims.set(key, new Animated.Value(0));
-    }
-    const itemAnim = recentSearchItemAnims.get(key);
-
-    React.useEffect(() => {
-      Animated.timing(itemAnim, {
-        toValue: 1,
-        duration: 300,
-        delay: index * 50,
-        useNativeDriver: true,
-      }).start();
-    }, [item, index, itemAnim]);
+    // Create a static animation value for each item based on its index
+    const animatedStyle = {
+      opacity: fadeAnim,
+      transform: [
+        {
+          translateY: fadeAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [10 + index * 5, 0],
+          }),
+        },
+      ],
+    };
 
     return (
-      <Animated.View
-        style={{
-          opacity: itemAnim,
-          transform: [
-            {
-              translateY: itemAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [20, 0],
-              }),
-            },
-          ],
-        }}
-      >
+      <Animated.View style={animatedStyle}>
         <TouchableOpacity
           style={[styles.suggestionItem, { borderTopColor: borderColor }]}
           onPress={() => onSelectRecentSearch(item.term)}
@@ -179,6 +148,42 @@ const SearchTab = ({
             </Text>
           </View>
         </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
+  // Render word item with animation
+  const renderWordItem = ({
+    item,
+    index,
+  }: {
+    item: DictionaryEntry;
+    index: number;
+  }) => {
+    // Create a static animation value for each item based on its index
+    const animatedStyle = {
+      opacity: fadeAnim,
+      transform: [
+        {
+          translateY: fadeAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [10 + index * 5, 0],
+          }),
+        },
+      ],
+    };
+
+    return (
+      <Animated.View style={animatedStyle}>
+        <WordItem
+          item={item}
+          onPress={() => onSelectWord(item)}
+          onPronounce={onPronounceWord}
+          onToggleFavorite={() => onToggleFavorite(item.id)}
+          isFavorite={isFavorite(item.id)}
+          highlightText={searchQuery}
+          themeColors={colors}
+        />
       </Animated.View>
     );
   };
@@ -284,47 +289,7 @@ const SearchTab = ({
         <FlatList
           data={filteredWords}
           keyExtractor={(item) => item.id}
-          renderItem={({ item, index }) => {
-            if (!wordItemAnims.has(item.id)) {
-              wordItemAnims.set(item.id, new Animated.Value(0));
-            }
-            const itemAnim = wordItemAnims.get(item.id);
-
-            React.useEffect(() => {
-              Animated.timing(itemAnim, {
-                toValue: 1,
-                duration: 300,
-                delay: index * 50,
-                useNativeDriver: true,
-              }).start();
-            }, [item, index, itemAnim]);
-
-            return (
-              <Animated.View
-                style={{
-                  opacity: itemAnim,
-                  transform: [
-                    {
-                      translateY: itemAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [20, 0],
-                      }),
-                    },
-                  ],
-                }}
-              >
-                <WordItem
-                  item={item}
-                  onPress={() => onSelectWord(item)}
-                  onPronounce={onPronounceWord}
-                  onToggleFavorite={() => onToggleFavorite(item.id)}
-                  isFavorite={isFavorite(item.id)}
-                  highlightText={searchQuery}
-                  themeColors={colors}
-                />
-              </Animated.View>
-            );
-          }}
+          renderItem={renderWordItem}
           ListEmptyComponent={
             searchQuery.trim() !== "" ? (
               <EmptyState

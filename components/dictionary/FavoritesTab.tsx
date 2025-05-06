@@ -1,3 +1,4 @@
+"use client";
 import { StyleSheet, View, Text } from "react-native";
 import EmptyState from "./EmptyState";
 
@@ -6,9 +7,8 @@ type FavoritesTabProps = {
 };
 
 const FavoritesTab = ({ colors }: FavoritesTabProps) => {
-  const textColor = colors?.text || "#333";
-  const inactiveColor = colors?.inactive || "#999";
   const cardColor = colors?.card || "white";
+  const textColor = colors?.text || "#333";
 
   return (
     <View style={styles.tabContentContainer}>
